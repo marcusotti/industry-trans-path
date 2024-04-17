@@ -19,20 +19,18 @@ m.name = 'INDUSTRY'
 _data_dir = os.path.join(os.path.dirname(__file__), 'data')
 
 # different scenarios
-BASE = {'name': 'Base',
-    'dir': _data_dir + '\BASE.xlsx'}
-AT = {'name': 'National',
+DGG = {'name': 'DGG',
+    'dir': _data_dir + '\DGG.xlsx'}
+DGG_obl = {'name': 'DGG_obl',
     'dir': _data_dir + '\AT.xlsx'}
-AT_obl = {'name': 'National_obl',
-    'dir': _data_dir + '\AT.xlsx'}
-IMP = {'name': 'Import',
-    'dir': _data_dir + '\IMP.xlsx'}
+ELEC = {'name': 'ELEC',
+    'dir': _data_dir + '\ELEC.xlsx'}
 
 # active scenario
-scenario = AT
+scenario = ELEC
 _param_dir = scenario['dir']
 
-if scenario['name'] == 'National_obl':
+if scenario['name'] == 'DGG_obl':
     oblige_h2 = True
 else:
     oblige_h2 = False
