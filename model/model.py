@@ -151,17 +151,9 @@ m.p_sce_site = py.Param(
     doc='default sce of an industrial site in t_emissions/t_output'
 )
 
-# LOCATION OF AN INDUSTRIAL SITE
-m.p_loc = py.Param(
-    m.site,
-    initialize=site_df['location'],
-    within=py.Any,
-    doc='location of an industrial site'
-)
-
 # -----------------------------------------------------------------------------
 # ----- TECHNOLOGY SPECIFIC PARAMETERS ----------------------------------------
-# BRANCH OF A TECH
+# POSSIBLE BRANCH OF A TECH
 m.p_branch_tech = py.Param(
     m.tech,
     initialize=technology_df['branch'],
@@ -297,27 +289,6 @@ m.p_penalty = py.Param(
 
 # -----------------------------------------------------------------------------
 # ----- LOCATION SPECIFIC PARAMETERS ------------------------------------------
-# AVAILABILITY OF AN ENERGY CARRIER AT A LOCATION
-sheet_name_2020 = 'carrier_av_2020'
-sheet_name_2030 = 'carrier_av_2030'
-carrierav_2020_df = pd.read_excel(_param_dir, sheet_name=sheet_name_2020, 
-    index_col='site', header=0)
-carrierav_2030_df = pd.read_excel(_param_dir, sheet_name=sheet_name_2030,
-    index_col='site', header=0)
-
-def init_carrier_av(m, y, site, carrier):
-    if y <= 2029:
-        return carrierav_2020_df.loc[site][carrier]
-    else:
-        return carrierav_2030_df.loc[site][carrier]
-
-m.p_carrierav = py.Param(
-    m.y * m.site * m.energy_carrier,
-    initialize=init_carrier_av,
-    within=py.NonNegativeReals,
-    doc='availability of an energy carrier at a location'
-)
-
 # MAXIMAL AVAILABILITY OF AN ENERGY CARRIER IN THE SYSTEM
 max_2020_df = pd.read_excel(_param_dir, sheet_name='max 2020', 
     index_col='mix', header=0)
@@ -714,19 +685,6 @@ m.eq_yearzero = py.Constraint(
 
 # -----------------------------------------------------------------------------
 # ----- INFRASTRUCTURAL CONSTRAINTS --------------------------------------------
-# AVAILABILITY OF AN ENERGY CARRIER AT A LOCATION
-def carrier_limit_loc(m, y, site, carrier):
-    if m.p_carrierav[y, site, carrier] == 0:
-        return m.v_demand[y, site, carrier] == 0
-    else:
-        return py.Constraint.Skip
-
-m.eq_carrier_limit_loc = py.Constraint(
-    m.y * m.site * m.energy_carrier,
-    rule=carrier_limit_loc,
-    doc='availability of an energy carrier at a location'
-)
-
 # MAXIMAL AVAILABILITY OF AN ENERGY CARRIER IN THE SYSTEM
 def carrier_limit_sys(m, y, carrier, mix):
     return m.v_mix[y, carrier, mix] <= m.p_maxcarrier[y, carrier, mix]
