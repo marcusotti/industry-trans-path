@@ -39,7 +39,7 @@ ELEC = {'name': 'ELEC',
     'fig_name': 'ELEC'}
 
 # active scenario
-scenario = ELEC # enter active scenario here
+scenario = DGG # enter active scenario here
 _params_dir = scenario['dir']
 
 _results_dir = os.path.join(os.path.dirname(__file__),os.pardir, 'results',

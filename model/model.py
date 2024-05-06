@@ -27,7 +27,7 @@ ELEC = {'name': 'ELEC',
     'dir': _data_dir + '\ELEC.xlsx'}
 
 # active scenario
-scenario = ELEC
+scenario = DGG
 _param_dir = scenario['dir']
 
 if scenario['name'] == 'DGG_obl':
@@ -56,7 +56,7 @@ m.y = py.Set(
     # SET OF TECHNOLOGIES
 technology_df = pd.read_excel(_param_dir, sheet_name='TECHNOLOGY', 
     index_col='technology', header=0)
-technology_df = technology_df.drop(columns=['description', 'application'])
+technology_df = technology_df.drop(columns=['description'])
 
 m.tech = py.Set(
     initialize=technology_df.index,
@@ -214,17 +214,22 @@ m.p_energycarrier_tech = py.Param(
 )
 
 # CHANGE OF SPECIFIC CO2 EMISSIONS (SCe) WITH A TECH
-def init_sce_tech(m, tech):
-    if math.isnan(technology_df.loc[tech]['SCe']):
-        return 0
+sce_2020_df = pd.read_excel(_param_dir, sheet_name='SCe_2020',
+    index_col='technology', header=0)
+sce_2030_df = pd.read_excel(_param_dir, sheet_name='SCe_2030',
+    index_col='technology', header=0)
+
+def init_sce_tech(m, y, tech):
+    if y <= 2029:
+        return sce_2020_df.loc[tech]['SCe']
     else:
-        return technology_df.loc[tech]['SCe']
+        return sce_2030_df.loc[tech]['SCe']
 
 m.p_sce_tech = py.Param(
-    m.tech,
+    m.y * m.tech,
     initialize=init_sce_tech,
     within=py.NonNegativeReals,
-    doc='change of specific CO2 emissions per tech'
+    doc='change of specific CO2 emissions per year and tech'
 )
 
 # -----------------------------------------------------------------------------
@@ -468,7 +473,7 @@ m.eq_sec = py.Constraint(
 def sce(m, y, site):
     return (
         m.v_sce[y, site] == m.p_sce_site[site] * (1 - sum(
-        m.p_sce_tech[tech] * m.b_tech[y, site, tech] for tech in m.tech))
+        m.p_sce_tech[y, tech] * m.b_tech[y, site, tech] for tech in m.tech))
         )
 
 m.eq_sce = py.Constraint(
@@ -716,7 +721,7 @@ def abated_emissions(m, y, tech):
     return(
         m.v_abated[y, tech] == 
         sum(m.b_tech[y, site, tech] * m.p_sce_site[site] * m.p_output[y, site]
-        * m.p_sce_tech[tech] for site in m.site)
+        * m.p_sce_tech[y, tech] for site in m.site)
     )
 
 m.eq_abated_emissions = py.Constraint(
