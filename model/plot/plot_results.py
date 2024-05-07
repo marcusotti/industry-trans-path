@@ -20,32 +20,85 @@ plt.rcParams.update({
     'font.serif': 'mathpazo'
 })
 
+number = 4 # change scenario here (0-7)
+
+alpha = 0.9
+
 # =============================================================================
 # DIRECTORIES
-_data_dir = os.path.join(os.path.dirname(__file__), os.pardir, 'data')
 _cur_dir = os.path.dirname(os.path.abspath(__file__))
 _model_dir = os.path.join(_cur_dir, '..')
 _fig_dir = os.path.join(_model_dir, 'figures')
+_results_dir = os.path.join(_model_dir, 'results')
+_params_dir = os.path.join(_model_dir, 'params.xlsx')
 
 # different scenarios
-DGG = {'name': 'DGG',
-    'dir': _data_dir + '\DGG.xlsx',
-    'fig_name': 'DGG'}
-DGG_obl = {'name': 'DGG_obl',
-    'dir': _data_dir + '\AT.xlsx',
-    'fig_name': 'DGG_obl'}
-ELEC = {'name': 'ELEC',
-    'dir': _data_dir + '\ELEC.xlsx',
-    'fig_name': 'ELEC'}
+green_ggpos_h2pos = {
+    'elec': True,
+    'gg': False,
+    'h2': False,
+    'name': 'green_ggpos_h2pos'
+}
+green_ggpos_h2obl = {
+    'elec': True,
+    'gg': False,
+    'h2': True,
+    'name': 'green_ggpos_h2obl'
+} 
+green_ggobl_h2pos = {
+    'elec': True,
+    'gg': True,
+    'h2': False,
+    'name': 'green_ggobl_h2pos'
+}
+green_ggobl_h2obl = {
+    'elec': True,
+    'gg': True,
+    'h2': True,
+    'name': 'green_ggobl_h2obl'
+}
+grey_ggpos_h2pos = {
+    'elec': False,
+    'gg': False,
+    'h2': False,
+    'name': 'grey_ggpos_h2pos'
+}
+grey_ggpos_h2obl = {
+    'elec': False,
+    'gg': False,
+    'h2': True,
+    'name': 'grey_ggpos_h2obl'
+}
+grey_ggobl_h2pos = {
+    'elec': False,
+    'gg': True,
+    'h2': False,
+    'name': 'grey_ggobl_h2pos'
+}
+grey_ggobl_h2obl = {
+    'elec': False,
+    'gg': True,
+    'h2': True,
+    'name': 'grey_ggobl_h2obl'
+}
+
+scenarios = [
+    green_ggpos_h2pos,
+    green_ggpos_h2obl,
+    green_ggobl_h2pos,
+    green_ggobl_h2obl,
+    grey_ggpos_h2pos,
+    grey_ggpos_h2obl,
+    grey_ggobl_h2pos,
+    grey_ggobl_h2obl
+]
 
 # active scenario
-scenario = ELEC # enter active scenario here
-_params_dir = scenario['dir']
+scenario = scenarios[number]
 
-_results_dir = os.path.join(os.path.dirname(__file__),os.pardir, 'results',
-    scenario['name'])
-
-alpha = 0.9
+_results_dir = os.path.join(_results_dir, scenario['name'])
+if not os.path.exists(_results_dir):
+    os.makedirs(_results_dir)
 
 # =============================================================================
 # PLOT DEMAND
@@ -76,11 +129,11 @@ site_df = pd.read_excel(_params_dir, sheet_name='SITE',
 site_df = site_df.drop(columns=['comments'])
 
 IS_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=['elec', 'NG', 'coal', 'H2', 'alt'])
+    columns=carriers)
 PP_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=['elec', 'NG', 'coal', 'H2', 'alt'])
+    columns=carriers)
 NMM_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=['elec', 'NG', 'coal', 'H2', 'alt'])
+    columns=carriers)
 IS_dem = []
 PP_dem = []
 NMM_dem = []
@@ -106,40 +159,6 @@ NMM_dem = pd.concat(NMM_dem, axis=1, keys=file.sheet_names)
 IS_dem_plot = IS_dem.loc[:,years] / 1e6
 PP_dem_plot = PP_dem.loc[:,years] / 1e6
 NMM_dem_plot = NMM_dem.loc[:,years] / 1e6
-
-# include green gases
-IS = pd.DataFrame(index=carriers, columns=years)
-PP = pd.DataFrame(index=carriers, columns=years)
-NMM = pd.DataFrame(index=carriers, columns=years)
-
-for y in years:
-    for c in IS_dem_plot.index:
-        if c == 'NG':
-            if y == '2021':
-                GG_ratio = 0
-            elif y == '2025':
-                GG_ratio = 0.15
-            elif y == '2030':
-                GG_ratio = 0.4
-            elif y == '2035':
-                GG_ratio = 0.7
-            else:
-                GG_ratio = 1
-            IS.loc['GG',y] = GG_ratio * IS_dem_plot.loc[c,y]
-            IS.loc[c,y] = (1 - GG_ratio) * IS_dem_plot.loc[c,y]
-            PP.loc['GG',y] = GG_ratio * PP_dem_plot.loc[c,y]
-            PP.loc[c,y] = (1 - GG_ratio) * PP_dem_plot.loc[c,y]
-            NMM.loc['GG',y] = GG_ratio * NMM_dem_plot.loc[c,y]
-            NMM.loc[c,y] = (1 - GG_ratio) * NMM_dem_plot.loc[c,y]
-        else:
-            IS.loc[c,y] = IS_dem_plot.loc[c,y]
-            PP.loc[c,y] = PP_dem_plot.loc[c,y]
-            NMM.loc[c,y] = NMM_dem_plot.loc[c,y]
-
-IS_dem_plot = IS
-PP_dem_plot = PP
-NMM_dem_plot = NMM
-
 
 # Plots
 bar_width = 0.28
@@ -227,123 +246,64 @@ ax.tick_params(axis='x', which='minor', length=0)
 
 ax.set_ylim([0, IS_dem_plot.sum(axis=0).max() + 6.5])
 
-fig_dem_name = '/demand_' + scenario['fig_name'] + '.png'
+fig_dem_name = '/demand_' + scenario['name'] + '.png'
 fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
 
-"""
 # =============================================================================
-# PLOT DEMAND IS
+# PLOT CO2 EMISSIONS
+from plot_utils import cumulate_data
 
 # generate plot
-fig, ax = plt.subplots(figsize=(8, 6))
-
-years = ['2021', '2025', '2030', '2035', '2040']
-carriers = ['coal', 'alt', 'NG', 'GG', 'H2', 'elec']
-
-# add colors
-colors = {
-    'elec': '#2F58CD',
-    'NG': '#D9CB50',
-    'coal': '#343A40',
-    'H2': '#93BFCF',
-    'alt': '#905E96',
-    'GG': '#6A994E'
-}
+fig_co2, ax_co2 = plt.subplots(figsize=(8, 5))
 
 # read data
-var = 'v_demand'
-_file = os.path.join(_results_dir, var + '.xlsx')
-file = pd.ExcelFile(_file)
+v_emissions = cumulate_data('v_emissions', scenario)
+v_emissions.index = v_emissions.index.astype(str)
+emissions = v_emissions.loc[years] /1e6
 
-site_df = pd.read_excel(_params_dir, sheet_name='SITE', 
-    index_col='site', header=0)
-site_df = site_df.drop(columns=['comments'])
+# plot emissions
+ax_co2.bar(years, emissions, color='#606c38', label='CO2 emissions', hatch='//', edgecolor='white', alpha=alpha)
 
-IS_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=['elec', 'NG', 'coal', 'H2', 'alt'])
+# CO2 abatement
+tech_df = pd.read_excel(_params_dir, sheet_name='TECHNOLOGY', index_col=0, header=0)
+v_abated = pd.read_excel(_results_dir + '\\v_abated.xlsx', sheet_name='data',
+    index_col=0, header=0)
 
-IS_dem = []
-
-for sheet in file.sheet_names:
-    df = pd.read_excel(_file, sheet_name=sheet, index_col=0)
-    for site in site_df.index:
-        if site_df.loc[site, 'branch'] == 'IS':
-            IS_dem_y.loc[site,:] = df.loc[site,:]
-        else:
-            continue
-        
-    IS_dem.append(IS_dem_y.sum(axis=0))
-
-IS_dem = pd.concat(IS_dem, axis=1, keys=file.sheet_names)
-
-IS_dem_plot = IS_dem.loc[:,years] / 1e6
-
-# include green gases
-IS = pd.DataFrame(index=carriers, columns=years)
+abated = pd.DataFrame(index=years, columns=['EEI', 'ELEC', 'FS', 'CCS'])
 
 for y in years:
-    for c in IS_dem_plot.index:
-        if c == 'NG':
-            if y == '2021':
-                GG_ratio = 0
-            elif y == '2025':
-                GG_ratio = 0.15
-            elif y == '2030':
-                GG_ratio = 0.4
-            elif y == '2035':
-                GG_ratio = 0.7
-            else:
-                GG_ratio = 1
-            IS.loc['GG',y] = GG_ratio * IS_dem_plot.loc[c,y]
-            IS.loc[c,y] = (1 - GG_ratio) * IS_dem_plot.loc[c,y]
+    for p in abated.columns:
+        if p == 'EEI':
+            pillar = 1
+        elif p == 'ELEC':
+            pillar = 2
+        elif p == 'FS':
+            pillar = 3
         else:
-            IS.loc[c,y] = IS_dem_plot.loc[c,y]
+            pillar = 4
 
-IS_dem_plot = IS
+        abated.loc[y,p] = sum(v_abated.loc[int(y),t] for t in tech_df.index if tech_df.loc[t,'pillar'] == pillar) / 1e6
 
-# Plot the bars
-ax.bar(years, IS_dem_plot.loc['coal'],
-    label='Coal', color=colors['coal'], alpha=alpha)
+ax_co2.bar(years, abated['EEI'], color='#9381ff', label='EEI', bottom=emissions, alpha=alpha)
+ax_co2.bar(years, abated['ELEC'], color='#ee9b00', label='ELEC', bottom=emissions + abated['EEI'], alpha=alpha)
+ax_co2.bar(years, abated['FS'], color='#60d394', label='FS', bottom=emissions + abated['EEI'] + abated['ELEC'], alpha=alpha)
+ax_co2.bar(years, abated['CCS'], color='#ee6055', label='CCS', bottom=emissions + abated['EEI'] + abated['ELEC'] + abated['FS'], alpha=alpha)
 
-ax.bar(years, IS_dem_plot.loc['alt'], alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
-
-ax.bar(years, IS_dem_plot.loc['NG'], alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
-
-ax.bar(years, IS_dem_plot.loc['GG'], alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
-
-ax.bar(years, IS_dem_plot.loc['H2'], alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'] + IS_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
-
-ax.bar(years, IS_dem_plot.loc['elec'], alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'] + IS_dem_plot.loc['GG'] + IS_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
-
-# add patches for legend
-_patches = []
-_patches.append(mpatches.Patch(color=colors['coal'], label='Coal'))
-_patches.append(mpatches.Patch(color=colors['alt'], label='Other Fuels'))
-_patches.append(mpatches.Patch(color=colors['NG'], label='Natural Gas'))
-_patches.append(mpatches.Patch(color=colors['GG'], label='Green Gases'))
-_patches.append(mpatches.Patch(color=colors['H2'], label='Hydrogen'))
-_patches.append(mpatches.Patch(color=colors['elec'], label='Electricity'))
-
-# add specs for plot
-ax.legend(handles=_patches, loc='upper center', facecolor='White', 
-    fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=3, 
+# add plot specs
+ax_co2.legend(loc='upper center', facecolor='White', 
+    fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=5, 
     borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
 
-ax.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
-ax.set_ylabel('Energy demand in TWh', fontsize=15)
-ax.set_yticklabels(ax.get_yticks(), fontsize=15)
+ax_co2.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+ax_co2.set_ylabel('CO2 emissions in Mt', fontsize=15)
+ax_co2.tick_params(axis='y', labelsize=15)
+ax_co2.set_ylim([0, emissions.max() * 1.2])
+ax_co2.set_xticks(years)
+ax_co2.set_xticklabels(years, fontsize=15)
+ax_co2.tick_params(axis='x', length=0, pad=10)
 
-ax.set_title('Projected energy demand of Iron \& Steel industry in Austria', fontsize=20)
+fig_co2_name = '/co2_' + scenario['name'] + '.png'
+fig_co2.savefig(_fig_dir + fig_co2_name, dpi=1000)
 
-# Adjust the x-axis ticks and labels
-ax.set_xticklabels(years, fontsize=15)
-
-ax.set_ylim([0, IS_dem_plot.sum(axis=0).max() + 6.5])
-"""
 plt.tight_layout()
 plt.show()

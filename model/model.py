@@ -16,24 +16,78 @@ from utils import print_param, print_var, var2excel
 m = py.ConcreteModel()
 m.name = 'INDUSTRY'
 
-_data_dir = os.path.join(os.path.dirname(__file__), 'data')
+number = 4 # change scenario here (0-7)
+
+_params_dir = os.path.join(os.path.dirname(__file__), 'params.xlsx')
+_results_dir = os.path.join(os.path.dirname(__file__), 'results')
 
 # different scenarios
-DGG = {'name': 'DGG',
-    'dir': _data_dir + '\DGG.xlsx'}
-DGG_obl = {'name': 'DGG_obl',
-    'dir': _data_dir + '\AT.xlsx'}
-ELEC = {'name': 'ELEC',
-    'dir': _data_dir + '\ELEC.xlsx'}
+green_ggpos_h2pos = {
+    'elec': True,
+    'gg': False,
+    'h2': False,
+    'name': 'green_ggpos_h2pos'
+}
+green_ggpos_h2obl = {
+    'elec': True,
+    'gg': False,
+    'h2': True,
+    'name': 'green_ggpos_h2obl'
+} 
+green_ggobl_h2pos = {
+    'elec': True,
+    'gg': True,
+    'h2': False,
+    'name': 'green_ggobl_h2pos'
+}
+green_ggobl_h2obl = {
+    'elec': True,
+    'gg': True,
+    'h2': True,
+    'name': 'green_ggobl_h2obl'
+}
+grey_ggpos_h2pos = {
+    'elec': False,
+    'gg': False,
+    'h2': False,
+    'name': 'grey_ggpos_h2pos'
+}
+grey_ggpos_h2obl = {
+    'elec': False,
+    'gg': False,
+    'h2': True,
+    'name': 'grey_ggpos_h2obl'
+}
+grey_ggobl_h2pos = {
+    'elec': False,
+    'gg': True,
+    'h2': False,
+    'name': 'grey_ggobl_h2pos'
+}
+grey_ggobl_h2obl = {
+    'elec': False,
+    'gg': True,
+    'h2': True,
+    'name': 'grey_ggobl_h2obl'
+}
+
+scenarios = [
+    green_ggpos_h2pos,
+    green_ggpos_h2obl,
+    green_ggobl_h2pos,
+    green_ggobl_h2obl,
+    grey_ggpos_h2pos,
+    grey_ggpos_h2obl,
+    grey_ggobl_h2pos,
+    grey_ggobl_h2obl
+]
 
 # active scenario
-scenario = DGG
-_param_dir = scenario['dir']
+scenario = scenarios[number]
 
-if scenario['name'] == 'DGG_obl':
-    oblige_h2 = True
-else:
-    oblige_h2 = False
+_results_dir = os.path.join(_results_dir, scenario['name'])
+if not os.path.exists(_results_dir):
+    os.makedirs(_results_dir)
 
 # =============================================================================
 # =============================================================================
@@ -54,7 +108,7 @@ m.y = py.Set(
 
 # -----------------------------------------------------------------------------
     # SET OF TECHNOLOGIES
-technology_df = pd.read_excel(_param_dir, sheet_name='TECHNOLOGY', 
+technology_df = pd.read_excel(_params_dir, sheet_name='TECHNOLOGY', 
     index_col='technology', header=0)
 technology_df = technology_df.drop(columns=['description'])
 
@@ -66,7 +120,7 @@ m.tech = py.Set(
 
 # -----------------------------------------------------------------------------
     # SET OF INDUSTRIAL SITES
-site_df = pd.read_excel(_param_dir, sheet_name='SITE', index_col='site', 
+site_df = pd.read_excel(_params_dir, sheet_name='SITE', index_col='site', 
     header=0)
 site_df = site_df.drop(columns=['comments'])
 
@@ -78,7 +132,7 @@ m.site = py.Set(
 
 # -----------------------------------------------------------------------------
     # SET OF ENERGY CARRIERS
-energy_carrier = ['elec', 'NG', 'coal', 'H2', 'alt']
+energy_carrier = ['elec', 'NG', 'coal', 'H2', 'alt', 'GG']
 
 m.energy_carrier = py.Set(
     initialize=energy_carrier,
@@ -87,8 +141,18 @@ m.energy_carrier = py.Set(
 )
 
 # -----------------------------------------------------------------------------
+    # SET OF ENERGY CARRIERS WITHOUT GREEN GAS
+ec_no_gg = {ec for ec in m.energy_carrier if ec != 'GG'}
+
+m.ec_no_gg = py.Set(
+    initialize=ec_no_gg,
+    ordered=True,
+    doc='set of energy carriers without green gas'
+)
+
+# -----------------------------------------------------------------------------
     # SET OF ENERGY MIX
-energy_price_2020_df = pd.read_excel(_param_dir,sheet_name='energy price 2020',
+energy_price_2020_df = pd.read_excel(_params_dir,sheet_name='energy price 2020',
     index_col='mix', header=0)
 
 m.mix = py.Set(
@@ -137,8 +201,8 @@ m.p_sec_site = py.Param(
 
 # SHARE OF CARRIER OF AN INDUSTRIAL SITE
 m.p_energycarrier_site = py.Param(
-    m.site * m.energy_carrier,
-    initialize=site_df[m.energy_carrier].stack().to_dict(),
+    m.site * m.ec_no_gg,
+    initialize=site_df[m.ec_no_gg].stack().to_dict(),
     within=py.NonNegativeReals,
     doc='default sec of an industrial site per carrier in MWh/t_output'
 )
@@ -207,17 +271,20 @@ def init_energycarrier_tech(m, tech, energy_carrier):
         return technology_df.loc[tech][energy_carrier]
 
 m.p_energycarrier_tech = py.Param(
-    m.tech * m.energy_carrier,
+    m.tech * m.ec_no_gg,
     initialize=init_energycarrier_tech,
     within=py.Reals,
     doc='change of usage of the different energy carriers with a technology'
 )
 
 # CHANGE OF SPECIFIC CO2 EMISSIONS (SCe) WITH A TECH
-sce_2020_df = pd.read_excel(_param_dir, sheet_name='SCe_2020',
+sce_2020_df = pd.read_excel(_params_dir, sheet_name='SCe_2020',
     index_col='technology', header=0)
-sce_2030_df = pd.read_excel(_param_dir, sheet_name='SCe_2030',
-    index_col='technology', header=0)
+if scenario['elec']:
+    sce_2030_df = pd.read_excel(_params_dir, sheet_name='SCe_2030',
+        index_col='technology', header=0)
+else:
+    sce_2030_df = sce_2020_df
 
 def init_sce_tech(m, y, tech):
     if y <= 2029:
@@ -243,11 +310,11 @@ m.c_inv_tech = py.Param(
 )
 
 # ENERGY PRICE
-energy_price_2025_df = pd.read_excel(_param_dir,sheet_name='energy price 2025',
+energy_price_2025_df = pd.read_excel(_params_dir,sheet_name='energy price 2025',
     index_col='mix', header=0)
-energy_price_2030_df = pd.read_excel(_param_dir,sheet_name='energy price 2030',
+energy_price_2030_df = pd.read_excel(_params_dir,sheet_name='energy price 2030',
     index_col='mix', header=0)
-energy_price_2035_df = pd.read_excel(_param_dir,sheet_name='energy price 2035',
+energy_price_2035_df = pd.read_excel(_params_dir,sheet_name='energy price 2035',
     index_col='mix', header=0)
 
 def init_energy_price(m, y, carrier, mix):
@@ -268,7 +335,7 @@ m.c_energy = py.Param(
 )
 
 # COSTS OF CO2 EMISSIONS
-co2price_df = pd.read_excel(_param_dir, sheet_name='CO2', index_col='year',
+co2price_df = pd.read_excel(_params_dir, sheet_name='CO2', index_col='year',
     header=0)
 
 m.c_co2 = py.Param(
@@ -295,15 +362,15 @@ m.p_penalty = py.Param(
 # -----------------------------------------------------------------------------
 # ----- LOCATION SPECIFIC PARAMETERS ------------------------------------------
 # MAXIMAL AVAILABILITY OF AN ENERGY CARRIER IN THE SYSTEM
-max_2020_df = pd.read_excel(_param_dir, sheet_name='max 2020', 
+max_2020_df = pd.read_excel(_params_dir, sheet_name='max 2020', 
     index_col='mix', header=0)
-max_2025_df = pd.read_excel(_param_dir, sheet_name='max 2025', 
+max_2025_df = pd.read_excel(_params_dir, sheet_name='max 2025', 
     index_col='mix', header=0)
-max_2030_df = pd.read_excel(_param_dir, sheet_name='max 2030',
+max_2030_df = pd.read_excel(_params_dir, sheet_name='max 2030',
     index_col='mix', header=0)
-max_2035_df = pd.read_excel(_param_dir, sheet_name='max 2035',
+max_2035_df = pd.read_excel(_params_dir, sheet_name='max 2035',
     index_col='mix', header=0)
-max_2040_df = pd.read_excel(_param_dir, sheet_name='max 2040',
+max_2040_df = pd.read_excel(_params_dir, sheet_name='max 2040',
     index_col='mix', header=0)
 
 def init_maxcarrier(m, y, energy_carrier, mix):
@@ -388,7 +455,7 @@ m.v_emissions = py.Var(
 
 # SPECIFIC ENERGY CONSUMPTION OF AN INDUSTRIAL SITE
 m.v_sec = py.Var(
-    m.y * m.site * m.energy_carrier,
+    m.y * m.site * m.ec_no_gg,
     within=py.NonNegativeReals,
     doc='specific energy consumption of an industrial site in MWh/t_output'
 )
@@ -464,7 +531,7 @@ def sec(m, y, site, carrier):
         )
 
 m.eq_sec = py.Constraint(
-    m.y * m.site * m.energy_carrier,
+    m.y * m.site * m.ec_no_gg,
     rule=sec,
     doc='specific energy consumption of a site per year and carrier'
 )
@@ -481,26 +548,6 @@ m.eq_sce = py.Constraint(
     rule=sce,
     doc='specific CO2 emissions of an industrial site per year'
 )
-
-# EMISSIONS CANNOT BE ZERO OR SINK TOO MUCH AT THE BEGINNING
-def min_sce(m, y):
-    if y == m.y.first():
-        return py.Constraint.Skip
-    elif y <= 2030:
-        return (
-            sum(m.v_emissions[y, site] for site in m.site) >= 
-            0.7 * sum(m.v_emissions[y-1, site] for site in m.site)
-            )
-    else:
-        return py.Constraint.Skip
-
-m.eq_min_sce = py.Constraint(
-    m.y,
-    rule=min_sce,
-    doc='emissions ramp down'
-)
-
-m.eq_min_sce.deactivate()
 
 # NEWLY INSTALLED TECHNOLOGY
 def new_tech(m, y, site, tech):
@@ -534,11 +581,18 @@ m.eq_inv_tech = py.Constraint(
 
 # ANNUAL ENERGY CONSUMPTION OF AN INDUSTRIAL SITE
 def demand(m, y, site, carrier):
-    return (
-        m.v_demand[y, site, carrier] ==
-        m.v_sec[y, site, carrier] * m.p_output[y, site]
-        - m.v_notcovered[y, site, carrier]
-        )
+    if carrier == 'NG' or carrier == 'GG':
+        return (
+            sum(m.v_demand[y, site, ec] for ec in ['NG', 'GG']) ==
+            m.v_sec[y, site, 'NG'] * m.p_output[y, site]
+            - sum(m.v_notcovered[y, site, carrier] for ec in ['NG', 'GG'])
+            )
+    else:
+        return (
+            m.v_demand[y, site, carrier] ==
+            m.v_sec[y, site, carrier] * m.p_output[y, site]
+            - m.v_notcovered[y, site, carrier]
+            )
 
 m.eq_demand = py.Constraint(
     m.y * m.site * m.energy_carrier,
@@ -713,7 +767,7 @@ m.eq_h2_obligation = py.Constraint(
     doc='obligation to use national carriers'
 )
 
-if not oblige_h2:
+if not scenario['h2']:
     m.eq_h2_obligation.deactivate()
 
 # CALCULATE ABATED EMISSIONS
@@ -778,7 +832,6 @@ Solver.options['LogFile'] = os.path.join(
     os.path.dirname(__file__), str(m.name) + '.log')
 Solver.options['mipgap'] = 0.01
 Solver.options['MIPFocus'] = 1
-#Solver.options['NonConvex'] = 2
 solution = Solver.solve(m, tee=True)
 
 # =============================================================================
@@ -788,6 +841,15 @@ solution = Solver.solve(m, tee=True)
 # =============================================================================
 # =============================================================================
 # =============================================================================
+# write results to excel files
+var2excel(m.v_demand, scenario, m.y, m.site, m.energy_carrier)
+var2excel(m.v_mix, scenario,  m.y, m.energy_carrier, m.mix)
+var2excel(m.b_tech, scenario,  m.y, m.site, m.tech)
+var2excel(m.v_notcovered, scenario,  m.y, m.site, m.energy_carrier)
+var2excel(m.v_inv_tech, scenario,  m.y, m.site)
+var2excel(m.v_emissions, scenario,  m.y, m.site)
+var2excel(m.v_abated, scenario,  m.y, m.tech)
+
 # print total costs
 CAPEX = sum(m.v_inv_tech[y, site].value for y in m.y for site in m.site)
 OPEX_dem = sum(
@@ -803,10 +865,11 @@ OPEX_emis = sum(
     for y in m.y for site in m.site
     )
 
-print('Total CAPEX: ', CAPEX/1e9)
-print('Total OPEX_dem: ', OPEX_dem/1e9)
-print('Total OPEX_notcov: ', OPEX_notcov/1e9)
-print('Total OPEX_emis: ', OPEX_emis/1e9, '\n')
+with open(os.path.join(_results_dir, 'costs.txt'), 'w') as file:
+    file.write('Total CAPEX: ' + str(CAPEX/1e9) + '\n')
+    file.write('Total OPEX_dem: ' + str(OPEX_dem/1e9) + '\n')
+    file.write('Total OPEX_notcov: ' + str(OPEX_notcov/1e9) + '\n')
+    file.write('Total OPEX_emis: ' + str(OPEX_emis/1e9) + '\n')
 
 # print costs for IS
 CAPEX = sum(m.v_inv_tech[y, site].value for y in m.y for site in m.site if m.p_branch_site[site] == 'IS')
@@ -829,10 +892,11 @@ OPEX_emis = sum(
     for y in m.y for site in m.site if m.p_branch_site[site] == 'IS'
     )
 
-print('IS CAPEX: ', CAPEX/1e9)
-print('IS OPEX_dem: ', OPEX_dem/1e9)
-print('IS OPEX_notcov: ', OPEX_notcov/1e9)
-print('IS OPEX_emis: ', OPEX_emis/1e9, '\n')
+with open(os.path.join(_results_dir, 'costs.txt'), 'a') as file:
+    file.write('IS CAPEX: ' + str(CAPEX/1e9) + '\n')
+    file.write('IS OPEX_dem: ' + str(OPEX_dem/1e9) + '\n')
+    file.write('IS OPEX_notcov: ' + str(OPEX_notcov/1e9) + '\n')
+    file.write('IS OPEX_emis: ' + str(OPEX_emis/1e9) + '\n')
 
 # print costs for PP
 CAPEX = sum(m.v_inv_tech[y, site].value for y in m.y for site in m.site if m.p_branch_site[site] == 'PP')
@@ -855,10 +919,11 @@ OPEX_emis = sum(
     for y in m.y for site in m.site if m.p_branch_site[site] == 'PP'
     )
 
-print('PP CAPEX: ', CAPEX/1e9)
-print('PP OPEX_dem: ', OPEX_dem/1e9)
-print('PP OPEX_notcov: ', OPEX_notcov/1e9)
-print('PP OPEX_emis: ', OPEX_emis/1e9, '\n')
+with open(os.path.join(_results_dir, 'costs.txt'), 'a') as file:
+    file.write('PP CAPEX: ' + str(CAPEX/1e9) + '\n')
+    file.write('PP OPEX_dem: ' + str(OPEX_dem/1e9) + '\n')
+    file.write('PP OPEX_notcov: ' + str(OPEX_notcov/1e9) + '\n')
+    file.write('PP OPEX_emis: ' + str(OPEX_emis/1e9) + '\n')
 
 # print costs for NMM
 CAPEX = sum(m.v_inv_tech[y, site].value for y in m.y for site in m.site if m.p_branch_site[site] == 'NMM')
@@ -881,16 +946,10 @@ OPEX_emis = sum(
     for y in m.y for site in m.site if m.p_branch_site[site] == 'NMM'
     )
 
-print('NMM CAPEX: ', CAPEX/1e9)
-print('NMM OPEX_dem: ', OPEX_dem/1e9)
-print('NMM OPEX_notcov: ', OPEX_notcov/1e9)
-print('NMM OPEX_emis: ', OPEX_emis/1e9, '\n')
+with open(os.path.join(_results_dir, 'costs.txt'), 'a') as file:
+    file.write('NMM CAPEX: ' + str(CAPEX/1e9) + '\n')
+    file.write('NMM OPEX_dem: ' + str(OPEX_dem/1e9) + '\n')
+    file.write('NMM OPEX_notcov: ' + str(OPEX_notcov/1e9) + '\n')
+    file.write('NMM OPEX_emis: ' + str(OPEX_emis/1e9) + '\n')
 
-# write results to excel files
-var2excel(m.v_demand, scenario, m.y, m.site, m.energy_carrier)
-var2excel(m.v_mix, scenario,  m.y, m.energy_carrier, m.mix)
-var2excel(m.b_tech, scenario,  m.y, m.site, m.tech)
-var2excel(m.v_notcovered, scenario,  m.y, m.site, m.energy_carrier)
-var2excel(m.v_inv_tech, scenario,  m.y, m.site)
-var2excel(m.v_emissions, scenario,  m.y, m.site)
-var2excel(m.v_abated, scenario,  m.y, m.tech)
+    print('Scenario ' + scenario['name'] + ' solved!')
