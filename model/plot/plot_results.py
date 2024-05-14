@@ -20,9 +20,6 @@ plt.rcParams.update({
     'font.serif': 'mathpazo'
 })
 
-# change scenario here (0-7)
-number = 0
-
 alpha = 0.8
 
 # =============================================================================
@@ -33,67 +30,35 @@ _params_dir = os.path.join(_model_dir, 'params.xlsx')
 _fig_dir = os.path.join(_model_dir, 'figures')
 
 # different scenarios
-green_ggpos_h2pos = {
-    'elec': True,
+ggpos_h2pos = {
     'gg': False,
     'h2': False,
-    'name': 'green_ggpos_h2pos'
+    'name': 'ggpos_h2pos'
 }
-green_ggpos_h2obl = {
-    'elec': True,
+ggpos_h2obl = {
     'gg': False,
     'h2': True,
-    'name': 'green_ggpos_h2obl'
+    'name': 'ggpos_h2obl'
 } 
-green_ggobl_h2pos = {
-    'elec': True,
+ggobl_h2pos = {
     'gg': True,
     'h2': False,
-    'name': 'green_ggobl_h2pos'
+    'name': 'ggobl_h2pos'
 }
-green_ggobl_h2obl = {
-    'elec': True,
+ggobl_h2obl = {
     'gg': True,
     'h2': True,
-    'name': 'green_ggobl_h2obl'
-}
-grey_ggpos_h2pos = {
-    'elec': False,
-    'gg': False,
-    'h2': False,
-    'name': 'grey_ggpos_h2pos'
-}
-grey_ggpos_h2obl = {
-    'elec': False,
-    'gg': False,
-    'h2': True,
-    'name': 'grey_ggpos_h2obl'
-}
-grey_ggobl_h2pos = {
-    'elec': False,
-    'gg': True,
-    'h2': False,
-    'name': 'grey_ggobl_h2pos'
-}
-grey_ggobl_h2obl = {
-    'elec': False,
-    'gg': True,
-    'h2': True,
-    'name': 'grey_ggobl_h2obl'
+    'name': 'ggobl_h2obl'
 }
 
 scenarios = [
-    green_ggpos_h2pos,
-    green_ggpos_h2obl,
-    green_ggobl_h2pos,
-    green_ggobl_h2obl,
-    grey_ggpos_h2pos,
-    grey_ggpos_h2obl,
-    grey_ggobl_h2pos,
-    grey_ggobl_h2obl
+    ggpos_h2pos,
+    ggpos_h2obl,
+    ggobl_h2pos,
+    ggobl_h2obl
 ]
 
-for number in range(8):
+for number in range(4):
     # active scenario
     scenario = scenarios[number]
     
@@ -227,6 +192,7 @@ for number in range(8):
 
     ax.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
     ax.set_ylabel('Energy demand in TWh', fontsize=15)
+    ax.set_ylim([0, IS_dem_plot.sum(axis=0).max() + 6.5])
     ax.set_yticklabels(ax.get_yticks(), fontsize=15)
 
     # Adjust the x-axis ticks and labels
@@ -245,46 +211,80 @@ for number in range(8):
         fontsize=12) 
     ax.tick_params(axis='x', which='minor', length=0)
 
-    ax.set_ylim([0, IS_dem_plot.sum(axis=0).max() + 6.5])
-
     fig_dem_name = '/demand_' + scenario['name'] + '.png'
     fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
+
+    # =============================================================================
+    # PLOT TOTAL DEMAND OF THE SECTORS
+    fig_sec, ax_sec = plt.subplots(figsize=(10, 5))
+
+    years_all = [str(year) for year in range(2021, 2041)]
+    
+    IS_total = IS_dem.sum(axis=0) / 1e6
+    PP_total = PP_dem.sum(axis=0) / 1e6
+    NMM_total = NMM_dem.sum(axis=0) / 1e6
+
+    ax_sec.plot(years_all, IS_total, label='Iron and Steel', color='#2a9d8f',
+        linewidth=2.5)
+    ax_sec.plot(years_all, PP_total, label='Pulp and Paper', color='#588157',
+        linewidth=2.5)
+    ax_sec.plot(years_all, NMM_total, label='Cement', color='#f4a261',
+        linewidth=2.5)
+
+    ax_sec.legend(loc='upper center', facecolor='White', fontsize=15, 
+        framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=4, 
+        borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
+
+    ax_sec.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+    ax_sec.set_ylabel('Energy demand in TWh', fontsize=15)
+    ax_sec.set_ylim([0, IS_total.max() + 8.5])
+    ax_sec.set_yticklabels(ax_sec.get_yticks(), fontsize=15)
+
+    ax_sec.set_xticks(years_all)
+    ax_sec.set_xticklabels([year if year in years else '' for year in years_all],
+        fontsize=15)
+
+    fig_total_name = '/demsectors_' + scenario['name'] + '.png'
+    fig_sec.savefig(_fig_dir + fig_total_name, dpi=1000)
 
     # =============================================================================
     # PLOT TOTAL DEMAND
     fig_dem, ax_dem = plt.subplots(figsize=(10, 5))
 
-    years_dem = [str(year) for year in range(2021, 2041)]
-    dem = pd.DataFrame(index=years_dem, columns=carriers)
+    dem = pd.DataFrame(index=years_all, columns=carriers)
 
     for sheet in file.sheet_names:
         df = pd.read_excel(_file, sheet_name=sheet, index_col=0)
         dem.loc[sheet, :] = df.sum(axis=0) / 1e6
 
-    for carrier in carriers:
-        ax_dem.plot(years_dem, dem[carrier], label=carrier, color=colors[carrier],
-            linewidth=2.5)
-    #ax_dem.plot(years_dem, dem.sum(axis=1), label='Total', color='red',
-    #    linewidth=3)
-    #_patches.append(Line2D([0], [0], color='red', linewidth=2, label='Total'))
+    dem = dem.fillna(0)
+    colors_dem = [
+        '#343A40',
+        '#905E96',
+        '#D9CB50',
+        '#6A994E',
+        '#93BFCF',
+        '#2F58CD'
+    ]
+    ax_dem.stackplot(years_all, dem['coal'], dem['alt'], dem['NG'], dem['GG'],
+        dem['H2'], dem['elec'], colors=colors_dem, alpha=alpha)
 
     ax_dem.legend(handles=_patches, loc='upper center', facecolor='White', 
-        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=4, 
+        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=3, 
         borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
 
     ax_dem.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
     ax_dem.set_ylabel('Energy demand in TWh', fontsize=15)
-    ax_dem.set_yticklabels(ax.get_yticks(), fontsize=15)
-
-    ax_dem.set_ylim([0, dem.max().max() + 8.5])
-
-    ax_dem.set_xticks(years_dem)
-    ax_dem.set_xticklabels([year if year in years else '' for year in years_dem],
+    ax_dem.set_ylim([0, dem.sum(axis=1).max() + 12.5])
+    ax_dem.set_yticklabels(ax_dem.get_yticks(), fontsize=15)
+    
+    ax_dem.set_xticks(range(len(years_all)))
+    ax_dem.set_xticklabels([year if year in years else '' for year in years_all],
         fontsize=15)
 
     fig_demtotal_name = '/totaldemand_' + scenario['name'] + '.png'
     fig_dem.savefig(_fig_dir + fig_demtotal_name, dpi=1000)
-
+    
     # =============================================================================
     # PLOT CO2 EMISSIONS
     from plot_utils import cumulate_data
