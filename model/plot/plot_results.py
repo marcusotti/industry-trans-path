@@ -20,17 +20,17 @@ plt.rcParams.update({
     'font.serif': 'mathpazo'
 })
 
-number = 4 # change scenario here (0-7)
+# change scenario here (0-7)
+number = 0
 
-alpha = 0.9
+alpha = 0.8
 
 # =============================================================================
 # DIRECTORIES
 _cur_dir = os.path.dirname(os.path.abspath(__file__))
 _model_dir = os.path.join(_cur_dir, '..')
-_fig_dir = os.path.join(_model_dir, 'figures')
-_results_dir = os.path.join(_model_dir, 'results')
 _params_dir = os.path.join(_model_dir, 'params.xlsx')
+_fig_dir = os.path.join(_model_dir, 'figures')
 
 # different scenarios
 green_ggpos_h2pos = {
@@ -93,217 +93,253 @@ scenarios = [
     grey_ggobl_h2obl
 ]
 
-# active scenario
-scenario = scenarios[number]
+for number in range(8):
+    # active scenario
+    scenario = scenarios[number]
+    
+    _results_dir = os.path.join(_model_dir, 'results')
+    _results_dir = os.path.join(_results_dir, scenario['name'])
+    if not os.path.exists(_results_dir):
+        os.makedirs(_results_dir)
 
-_results_dir = os.path.join(_results_dir, scenario['name'])
-if not os.path.exists(_results_dir):
-    os.makedirs(_results_dir)
+    # =============================================================================
+    # PLOT DEMAND PER BRANCH
+    years = ['2021', '2025', '2030', '2035', '2040']
+    carriers = ['coal', 'alt', 'NG', 'GG', 'H2', 'elec']
 
-# =============================================================================
-# PLOT DEMAND
+    # add colors
+    colors = {
+        'elec': '#2F58CD',
+        'NG': '#D9CB50',
+        'coal': '#343A40',
+        'H2': '#93BFCF',
+        'alt': '#905E96',
+        'GG': '#6A994E'
+    }
 
-# generate plot
-fig, ax = plt.subplots(figsize=(8, 6))
+    # read data
+    var = 'v_demand'
+    _file = os.path.join(_results_dir, var + '.xlsx')
+    file = pd.ExcelFile(_file)
 
-years = ['2021', '2025', '2030', '2035', '2040']
-carriers = ['coal', 'alt', 'NG', 'GG', 'H2', 'elec']
+    site_df = pd.read_excel(_params_dir, sheet_name='SITE', 
+        index_col='site', header=0)
+    site_df = site_df.drop(columns=['comments'])
 
-# add colors
-colors = {
-    'elec': '#2F58CD',
-    'NG': '#D9CB50',
-    'coal': '#343A40',
-    'H2': '#93BFCF',
-    'alt': '#905E96',
-    'GG': '#6A994E'
-}
+    # generate plot
+    fig, ax = plt.subplots(figsize=(8, 6))
 
-# read data
-var = 'v_demand'
-_file = os.path.join(_results_dir, var + '.xlsx')
-file = pd.ExcelFile(_file)
+    IS_dem_y = pd.DataFrame(index=site_df.index, 
+        columns=carriers)
+    PP_dem_y = pd.DataFrame(index=site_df.index, 
+        columns=carriers)
+    NMM_dem_y = pd.DataFrame(index=site_df.index, 
+        columns=carriers)
+    IS_dem = []
+    PP_dem = []
+    NMM_dem = []
 
-site_df = pd.read_excel(_params_dir, sheet_name='SITE', 
-    index_col='site', header=0)
-site_df = site_df.drop(columns=['comments'])
+    for sheet in file.sheet_names:
+        df = pd.read_excel(_file, sheet_name=sheet, index_col=0)
+        for site in site_df.index:
+            if site_df.loc[site, 'branch'] == 'IS':
+                IS_dem_y.loc[site,:] = df.loc[site,:]
+            elif site_df.loc[site, 'branch'] == 'PP':
+                PP_dem_y.loc[site,:] = df.loc[site,:]
+            else:
+                NMM_dem_y.loc[site,:] = df.loc[site,:]
+            
+        IS_dem.append(IS_dem_y.sum(axis=0))
+        PP_dem.append(PP_dem_y.sum(axis=0))
+        NMM_dem.append(NMM_dem_y.sum(axis=0))
 
-IS_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=carriers)
-PP_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=carriers)
-NMM_dem_y = pd.DataFrame(index=site_df.index, 
-    columns=carriers)
-IS_dem = []
-PP_dem = []
-NMM_dem = []
+    IS_dem = pd.concat(IS_dem, axis=1, keys=file.sheet_names)
+    PP_dem = pd.concat(PP_dem, axis=1, keys=file.sheet_names)
+    NMM_dem = pd.concat(NMM_dem, axis=1, keys=file.sheet_names)
 
-for sheet in file.sheet_names:
-    df = pd.read_excel(_file, sheet_name=sheet, index_col=0)
-    for site in site_df.index:
-        if site_df.loc[site, 'branch'] == 'IS':
-            IS_dem_y.loc[site,:] = df.loc[site,:]
-        elif site_df.loc[site, 'branch'] == 'PP':
-            PP_dem_y.loc[site,:] = df.loc[site,:]
-        else:
-            NMM_dem_y.loc[site,:] = df.loc[site,:]
-        
-    IS_dem.append(IS_dem_y.sum(axis=0))
-    PP_dem.append(PP_dem_y.sum(axis=0))
-    NMM_dem.append(NMM_dem_y.sum(axis=0))
+    IS_dem_plot = IS_dem.loc[:,years] / 1e6
+    PP_dem_plot = PP_dem.loc[:,years] / 1e6
+    NMM_dem_plot = NMM_dem.loc[:,years] / 1e6
 
-IS_dem = pd.concat(IS_dem, axis=1, keys=file.sheet_names)
-PP_dem = pd.concat(PP_dem, axis=1, keys=file.sheet_names)
-NMM_dem = pd.concat(NMM_dem, axis=1, keys=file.sheet_names)
+    # Plots
+    bar_width = 0.28
+    bar_positions = np.arange(len(years))
+    IS_dem_offset = bar_positions - 0.02
+    PP_dem_offset = bar_positions + bar_width
+    NMM_dem_offset = bar_positions + 2 * bar_width + 0.02
 
-IS_dem_plot = IS_dem.loc[:,years] / 1e6
-PP_dem_plot = PP_dem.loc[:,years] / 1e6
-NMM_dem_plot = NMM_dem.loc[:,years] / 1e6
+    # Plot the bars
+    ax.bar(IS_dem_offset, IS_dem_plot.loc['coal'], width=bar_width,
+        label='Coal', color=colors['coal'], alpha=alpha)
+    ax.bar(PP_dem_offset, PP_dem_plot.loc['coal'], width=bar_width,
+        label='Coal', color=colors['coal'], alpha=alpha)
+    ax.bar(NMM_dem_offset, NMM_dem_plot.loc['coal'], width=bar_width,
+        label='Coal', color=colors['coal'], alpha=alpha)
 
-# Plots
-bar_width = 0.28
-bar_positions = np.arange(len(years))
-IS_dem_offset = bar_positions - 0.02
-PP_dem_offset = bar_positions + bar_width
-NMM_dem_offset = bar_positions + 2 * bar_width + 0.02
+    ax.bar(IS_dem_offset, IS_dem_plot.loc['alt'], width=bar_width, alpha=alpha,
+        bottom=IS_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
+    ax.bar(PP_dem_offset, PP_dem_plot.loc['alt'], width=bar_width, alpha=alpha,
+        bottom=PP_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
+    ax.bar(NMM_dem_offset, NMM_dem_plot.loc['alt'], width=bar_width, alpha=alpha,
+        bottom=NMM_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
 
-# Plot the bars
-ax.bar(IS_dem_offset, IS_dem_plot.loc['coal'], width=bar_width,
-    label='Coal', color=colors['coal'], alpha=alpha)
-ax.bar(PP_dem_offset, PP_dem_plot.loc['coal'], width=bar_width,
-    label='Coal', color=colors['coal'], alpha=alpha)
-ax.bar(NMM_dem_offset, NMM_dem_plot.loc['coal'], width=bar_width,
-    label='Coal', color=colors['coal'], alpha=alpha)
+    ax.bar(IS_dem_offset, IS_dem_plot.loc['NG'], width=bar_width, alpha=alpha,
+        bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
+    ax.bar(PP_dem_offset, PP_dem_plot.loc['NG'], width=bar_width, alpha=alpha,
+        bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
+    ax.bar(NMM_dem_offset, NMM_dem_plot.loc['NG'], width=bar_width, alpha=alpha,
+        bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
 
-ax.bar(IS_dem_offset, IS_dem_plot.loc['alt'], width=bar_width, alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
-ax.bar(PP_dem_offset, PP_dem_plot.loc['alt'], width=bar_width, alpha=alpha,
-    bottom=PP_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
-ax.bar(NMM_dem_offset, NMM_dem_plot.loc['alt'], width=bar_width, alpha=alpha,
-    bottom=NMM_dem_plot.loc['coal'], label='Other fuels', color=colors['alt'])
+    ax.bar(IS_dem_offset, IS_dem_plot.loc['GG'], width=bar_width, alpha=alpha,
+        bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
+    ax.bar(PP_dem_offset, PP_dem_plot.loc['GG'], width=bar_width, alpha=alpha,
+        bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['NG'] + PP_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
+    ax.bar(NMM_dem_offset, NMM_dem_plot.loc['GG'], width=bar_width, alpha=alpha,
+        bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['NG'] + NMM_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
 
-ax.bar(IS_dem_offset, IS_dem_plot.loc['NG'], width=bar_width, alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
-ax.bar(PP_dem_offset, PP_dem_plot.loc['NG'], width=bar_width, alpha=alpha,
-    bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
-ax.bar(NMM_dem_offset, NMM_dem_plot.loc['NG'], width=bar_width, alpha=alpha,
-    bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['alt'], label='Natural Gas', color=colors['NG'])
+    ax.bar(IS_dem_offset, IS_dem_plot.loc['H2'], width=bar_width, alpha=alpha,
+        bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'] + IS_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
+    ax.bar(PP_dem_offset, PP_dem_plot.loc['H2'], width=bar_width, alpha=alpha,
+        bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['NG'] + PP_dem_plot.loc['alt'] + PP_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
+    ax.bar(NMM_dem_offset, NMM_dem_plot.loc['H2'], width=bar_width, alpha=alpha,
+        bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['NG'] + NMM_dem_plot.loc['alt'] + NMM_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
 
-ax.bar(IS_dem_offset, IS_dem_plot.loc['GG'], width=bar_width, alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
-ax.bar(PP_dem_offset, PP_dem_plot.loc['GG'], width=bar_width, alpha=alpha,
-    bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['NG'] + PP_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
-ax.bar(NMM_dem_offset, NMM_dem_plot.loc['GG'], width=bar_width, alpha=alpha,
-    bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['NG'] + NMM_dem_plot.loc['alt'], label='Green gases', color=colors['GG'])
+    ax.bar(IS_dem_offset, IS_dem_plot.loc['elec'], width=bar_width, alpha=alpha,
+        bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'] + IS_dem_plot.loc['GG'] + IS_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
+    ax.bar(PP_dem_offset, PP_dem_plot.loc['elec'], width=bar_width, alpha=alpha,
+        bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['NG'] + PP_dem_plot.loc['alt'] + PP_dem_plot.loc['GG'] + PP_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
+    ax.bar(NMM_dem_offset, NMM_dem_plot.loc['elec'], width=bar_width, alpha=alpha,
+        bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['NG'] + NMM_dem_plot.loc['alt'] + NMM_dem_plot.loc['GG'] + NMM_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
 
-ax.bar(IS_dem_offset, IS_dem_plot.loc['H2'], width=bar_width, alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'] + IS_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
-ax.bar(PP_dem_offset, PP_dem_plot.loc['H2'], width=bar_width, alpha=alpha,
-    bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['NG'] + PP_dem_plot.loc['alt'] + PP_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
-ax.bar(NMM_dem_offset, NMM_dem_plot.loc['H2'], width=bar_width, alpha=alpha,
-    bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['NG'] + NMM_dem_plot.loc['alt'] + NMM_dem_plot.loc['GG'], label='Hydrogen', color=colors['H2'])
+    # add patches for legend
+    _patches = []
+    _patches.append(mpatches.Patch(color=colors['coal'], label='Coal'))
+    _patches.append(mpatches.Patch(color=colors['alt'], label='Other Fuels'))
+    _patches.append(mpatches.Patch(color=colors['NG'], label='Natural Gas'))
+    _patches.append(mpatches.Patch(color=colors['GG'], label='Green Gases'))
+    _patches.append(mpatches.Patch(color=colors['H2'], label='Hydrogen'))
+    _patches.append(mpatches.Patch(color=colors['elec'], label='Electricity'))
 
-ax.bar(IS_dem_offset, IS_dem_plot.loc['elec'], width=bar_width, alpha=alpha,
-    bottom=IS_dem_plot.loc['coal'] + IS_dem_plot.loc['NG'] + IS_dem_plot.loc['alt'] + IS_dem_plot.loc['GG'] + IS_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
-ax.bar(PP_dem_offset, PP_dem_plot.loc['elec'], width=bar_width, alpha=alpha,
-    bottom=PP_dem_plot.loc['coal'] + PP_dem_plot.loc['NG'] + PP_dem_plot.loc['alt'] + PP_dem_plot.loc['GG'] + PP_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
-ax.bar(NMM_dem_offset, NMM_dem_plot.loc['elec'], width=bar_width, alpha=alpha,
-    bottom=NMM_dem_plot.loc['coal'] + NMM_dem_plot.loc['NG'] + NMM_dem_plot.loc['alt'] + NMM_dem_plot.loc['GG'] + NMM_dem_plot.loc['H2'], label='Electricity', color=colors['elec'])
+    # add specs for plot
+    ax.legend(handles=_patches, loc='upper center', facecolor='White', 
+        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=3, 
+        borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
 
-# add patches for legend
-_patches = []
-_patches.append(mpatches.Patch(color=colors['coal'], label='Coal'))
-_patches.append(mpatches.Patch(color=colors['alt'], label='Other Fuels'))
-_patches.append(mpatches.Patch(color=colors['NG'], label='Natural Gas'))
-_patches.append(mpatches.Patch(color=colors['GG'], label='Green Gases'))
-_patches.append(mpatches.Patch(color=colors['H2'], label='Hydrogen'))
-_patches.append(mpatches.Patch(color=colors['elec'], label='Electricity'))
+    ax.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+    ax.set_ylabel('Energy demand in TWh', fontsize=15)
+    ax.set_yticklabels(ax.get_yticks(), fontsize=15)
 
-# add specs for plot
-ax.legend(handles=_patches, loc='upper center', facecolor='White', 
-    fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=3, 
-    borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
+    # Adjust the x-axis ticks and labels
+    ax.set_xticks(bar_positions + bar_width)
+    ax.set_xticklabels(years, va='top', fontsize=15)
+    ax.tick_params(axis='x', which='major', length=0, pad=20)
 
-ax.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
-ax.set_ylabel('Energy demand in TWh', fontsize=15)
-ax.set_yticklabels(ax.get_yticks(), fontsize=15)
+    positions = []
+    for i in range(len(years)):
+        positions.append(IS_dem_offset[i])
+        positions.append(PP_dem_offset[i] + 1e-4)
+        positions.append(NMM_dem_offset[i])
 
-# Adjust the x-axis ticks and labels
-ax.set_xticks(bar_positions + bar_width)
-ax.set_xticklabels(years, va='top', fontsize=15)
-ax.tick_params(axis='x', which='major', length=0, pad=20)
+    ax.set_xticks(positions, minor=True) 
+    ax.set_xticklabels(['IS', 'PP', 'CEM'] * len(years), minor=True,  
+        fontsize=12) 
+    ax.tick_params(axis='x', which='minor', length=0)
 
-positions = []
-for i in range(len(years)):
-    positions.append(IS_dem_offset[i])
-    positions.append(PP_dem_offset[i] + 1e-4)
-    positions.append(NMM_dem_offset[i])
+    ax.set_ylim([0, IS_dem_plot.sum(axis=0).max() + 6.5])
 
-ax.set_xticks(positions, minor=True) 
-ax.set_xticklabels(['IS', 'PP', 'CEM'] * len(years), minor=True,  
-    fontsize=12) 
-ax.tick_params(axis='x', which='minor', length=0)
+    fig_dem_name = '/demand_' + scenario['name'] + '.png'
+    fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
 
-ax.set_ylim([0, IS_dem_plot.sum(axis=0).max() + 6.5])
+    # =============================================================================
+    # PLOT TOTAL DEMAND
+    fig_dem, ax_dem = plt.subplots(figsize=(10, 5))
 
-fig_dem_name = '/demand_' + scenario['name'] + '.png'
-fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
+    years_dem = [str(year) for year in range(2021, 2041)]
+    dem = pd.DataFrame(index=years_dem, columns=carriers)
 
-# =============================================================================
-# PLOT CO2 EMISSIONS
-from plot_utils import cumulate_data
+    for sheet in file.sheet_names:
+        df = pd.read_excel(_file, sheet_name=sheet, index_col=0)
+        dem.loc[sheet, :] = df.sum(axis=0) / 1e6
 
-# generate plot
-fig_co2, ax_co2 = plt.subplots(figsize=(8, 5))
+    for carrier in carriers:
+        ax_dem.plot(years_dem, dem[carrier], label=carrier, color=colors[carrier],
+            linewidth=2.5)
+    #ax_dem.plot(years_dem, dem.sum(axis=1), label='Total', color='red',
+    #    linewidth=3)
+    #_patches.append(Line2D([0], [0], color='red', linewidth=2, label='Total'))
 
-# read data
-v_emissions = cumulate_data('v_emissions', scenario)
-v_emissions.index = v_emissions.index.astype(str)
-emissions = v_emissions.loc[years] /1e6
+    ax_dem.legend(handles=_patches, loc='upper center', facecolor='White', 
+        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=4, 
+        borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
 
-# plot emissions
-ax_co2.bar(years, emissions, color='#606c38', label='CO2 emissions', hatch='//', edgecolor='white', alpha=alpha)
+    ax_dem.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+    ax_dem.set_ylabel('Energy demand in TWh', fontsize=15)
+    ax_dem.set_yticklabels(ax.get_yticks(), fontsize=15)
 
-# CO2 abatement
-tech_df = pd.read_excel(_params_dir, sheet_name='TECHNOLOGY', index_col=0, header=0)
-v_abated = pd.read_excel(_results_dir + '\\v_abated.xlsx', sheet_name='data',
-    index_col=0, header=0)
+    ax_dem.set_ylim([0, dem.max().max() + 8.5])
 
-abated = pd.DataFrame(index=years, columns=['EEI', 'ELEC', 'FS', 'CCS'])
+    ax_dem.set_xticks(years_dem)
+    ax_dem.set_xticklabels([year if year in years else '' for year in years_dem],
+        fontsize=15)
 
-for y in years:
-    for p in abated.columns:
-        if p == 'EEI':
-            pillar = 1
-        elif p == 'ELEC':
-            pillar = 2
-        elif p == 'FS':
-            pillar = 3
-        else:
-            pillar = 4
+    fig_demtotal_name = '/totaldemand_' + scenario['name'] + '.png'
+    fig_dem.savefig(_fig_dir + fig_demtotal_name, dpi=1000)
 
-        abated.loc[y,p] = sum(v_abated.loc[int(y),t] for t in tech_df.index if tech_df.loc[t,'pillar'] == pillar) / 1e6
+    # =============================================================================
+    # PLOT CO2 EMISSIONS
+    from plot_utils import cumulate_data
 
-ax_co2.bar(years, abated['EEI'], color='#9381ff', label='EEI', bottom=emissions, alpha=alpha)
-ax_co2.bar(years, abated['ELEC'], color='#ee9b00', label='ELEC', bottom=emissions + abated['EEI'], alpha=alpha)
-ax_co2.bar(years, abated['FS'], color='#60d394', label='FS', bottom=emissions + abated['EEI'] + abated['ELEC'], alpha=alpha)
-ax_co2.bar(years, abated['CCS'], color='#ee6055', label='CCS', bottom=emissions + abated['EEI'] + abated['ELEC'] + abated['FS'], alpha=alpha)
+    # generate plot
+    fig_co2, ax_co2 = plt.subplots(figsize=(8, 5))
 
-# add plot specs
-ax_co2.legend(loc='upper center', facecolor='White', 
-    fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=5, 
-    borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
+    # read data
+    v_emissions = cumulate_data('v_emissions', scenario)
+    v_emissions.index = v_emissions.index.astype(str)
+    emissions = v_emissions.loc[years] /1e6
 
-ax_co2.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
-ax_co2.set_ylabel('CO2 emissions in Mt', fontsize=15)
-ax_co2.tick_params(axis='y', labelsize=15)
-ax_co2.set_ylim([0, emissions.max() * 1.2])
-ax_co2.set_xticks(years)
-ax_co2.set_xticklabels(years, fontsize=15)
-ax_co2.tick_params(axis='x', length=0, pad=10)
+    # plot emissions
+    ax_co2.bar(years, emissions, color='#606c38', label='CO2 emissions', hatch='//', edgecolor='white', alpha=alpha)
 
-fig_co2_name = '/co2_' + scenario['name'] + '.png'
-fig_co2.savefig(_fig_dir + fig_co2_name, dpi=1000)
+    # CO2 abatement
+    tech_df = pd.read_excel(_params_dir, sheet_name='TECHNOLOGY', index_col=0, header=0)
+    v_abated = pd.read_excel(_results_dir + '\\v_abated.xlsx', sheet_name='data',
+        index_col=0, header=0)
 
-plt.tight_layout()
-plt.show()
+    abated = pd.DataFrame(index=years, columns=['EEI', 'ELEC', 'FS', 'CCS'])
+
+    for y in years:
+        for p in abated.columns:
+            if p == 'EEI':
+                pillar = 1
+            elif p == 'ELEC':
+                pillar = 2
+            elif p == 'FS':
+                pillar = 3
+            else:
+                pillar = 4
+
+            abated.loc[y,p] = sum(v_abated.loc[int(y),t] for t in tech_df.index if tech_df.loc[t,'pillar'] == pillar) / 1e6
+
+    ax_co2.bar(years, abated['EEI'], color='#9381ff', label='EEI', bottom=emissions, alpha=alpha)
+    ax_co2.bar(years, abated['ELEC'], color='#ee9b00', label='ELEC', bottom=emissions + abated['EEI'], alpha=alpha)
+    ax_co2.bar(years, abated['FS'], color='#60d394', label='FS', bottom=emissions + abated['EEI'] + abated['ELEC'], alpha=alpha)
+    ax_co2.bar(years, abated['CCS'], color='#ee6055', label='CCS', bottom=emissions + abated['EEI'] + abated['ELEC'] + abated['FS'], alpha=alpha)
+
+    # add plot specs
+    ax_co2.legend(loc='upper center', facecolor='White', 
+        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=5, 
+        borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
+
+    ax_co2.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+    ax_co2.set_ylabel('CO2 emissions in Mt', fontsize=15)
+    ax_co2.tick_params(axis='y', labelsize=15)
+    ax_co2.set_ylim([0, emissions.max() * 1.2])
+    ax_co2.set_xticks(years)
+    ax_co2.set_xticklabels(years, fontsize=15)
+    ax_co2.tick_params(axis='x', length=0, pad=10)
+
+    fig_co2_name = '/co2_' + scenario['name'] + '.png'
+    fig_co2.savefig(_fig_dir + fig_co2_name, dpi=1000)
+
+#plt.tight_layout()
+#plt.show()
