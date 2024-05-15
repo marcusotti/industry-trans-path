@@ -58,7 +58,7 @@ scenarios = [
     ggobl_h2obl
 ]
 
-for number in range(4):
+for number in range(1):
     # active scenario
     scenario = scenarios[number]
     
@@ -70,6 +70,7 @@ for number in range(4):
     # =============================================================================
     # PLOT DEMAND PER BRANCH
     years = ['2021', '2025', '2030', '2035', '2040']
+    years_all = [str(year) for year in range(2021, 2041)]
     carriers = ['coal', 'alt', 'NG', 'GG', 'H2', 'elec']
 
     # add colors
@@ -213,12 +214,10 @@ for number in range(4):
 
     fig_dem_name = '/demand_' + scenario['name'] + '.png'
     fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
-
+    """
     # =============================================================================
     # PLOT TOTAL DEMAND OF THE SECTORS
     fig_sec, ax_sec = plt.subplots(figsize=(10, 5))
-
-    years_all = [str(year) for year in range(2021, 2041)]
     
     IS_total = IS_dem.sum(axis=0) / 1e6
     PP_total = PP_dem.sum(axis=0) / 1e6
@@ -246,10 +245,10 @@ for number in range(4):
 
     fig_total_name = '/demsectors_' + scenario['name'] + '.png'
     fig_sec.savefig(_fig_dir + fig_total_name, dpi=1000)
-
+    """
     # =============================================================================
     # PLOT TOTAL DEMAND
-    fig_dem, ax_dem = plt.subplots(figsize=(10, 5))
+    fig_dem, ax_dem = plt.subplots(figsize=(8, 6))
 
     dem = pd.DataFrame(index=years_all, columns=carriers)
 
