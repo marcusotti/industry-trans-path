@@ -13,6 +13,8 @@ import seaborn as sns
 from matplotlib.font_manager import FontProperties
 from matplotlib.ticker import FuncFormatter
 
+from plot_utils import cumulate_data
+
 plt.rcParams.update(plt.rcParamsDefault)
 plt.rcParams.update({
     "text.usetex": True,
@@ -29,43 +31,47 @@ _model_dir = os.path.join(_cur_dir, '..')
 _params_dir = os.path.join(_model_dir, 'params.xlsx')
 _fig_dir = os.path.join(_model_dir, 'figures')
 
-# different scenarios
-ggpos_h2pos = {
-    'gg': False,
-    'h2': False,
-    'name': 'ggpos_h2pos'
-}
-ggpos_h2obl = {
-    'gg': False,
-    'h2': True,
-    'name': 'ggpos_h2obl'
-} 
-ggobl_h2pos = {
-    'gg': True,
-    'h2': False,
-    'name': 'ggobl_h2pos'
-}
-ggobl_h2obl = {
-    'gg': True,
-    'h2': True,
-    'name': 'ggobl_h2obl'
-}
 
-scenarios = [
-    ggpos_h2pos,
-    ggpos_h2obl,
-    ggobl_h2pos,
-    ggobl_h2obl
-]
+for number in range(4):
+    # different scenarios
+    ggpos_h2pos = {
+        'gg': False,
+        'h2': False,
+        'name': 'ggpos_h2pos'
+    }
+    ggpos_h2obl = {
+        'gg': False,
+        'h2': True,
+        'name': 'ggpos_h2obl'
+    } 
+    ggobl_h2pos = {
+        'gg': True,
+        'h2': False,
+        'name': 'ggobl_h2pos'
+    }
+    ggobl_h2obl = {
+        'gg': True,
+        'h2': True,
+        'name': 'ggobl_h2obl'
+    }
 
-for number in range(1):
+    scenarios = [
+        ggpos_h2pos,
+        ggpos_h2obl,
+        ggobl_h2pos,
+        ggobl_h2obl
+    ]
+
+    #number = 0
+    step = 10
+
     # active scenario
     scenario = scenarios[number]
-    
+
+    scenario['name'] = 'mix' + str(step) + '_' + scenario['name']
+
     _results_dir = os.path.join(_model_dir, 'results')
     _results_dir = os.path.join(_results_dir, scenario['name'])
-    if not os.path.exists(_results_dir):
-        os.makedirs(_results_dir)
 
     # =============================================================================
     # PLOT DEMAND PER BRANCH
@@ -218,7 +224,7 @@ for number in range(1):
     # =============================================================================
     # PLOT TOTAL DEMAND OF THE SECTORS
     fig_sec, ax_sec = plt.subplots(figsize=(10, 5))
-    
+
     IS_total = IS_dem.sum(axis=0) / 1e6
     PP_total = PP_dem.sum(axis=0) / 1e6
     NMM_total = NMM_dem.sum(axis=0) / 1e6
@@ -276,18 +282,16 @@ for number in range(1):
     ax_dem.set_ylabel('Energy demand in TWh', fontsize=15)
     ax_dem.set_ylim([0, dem.sum(axis=1).max() + 12.5])
     ax_dem.set_yticklabels(ax_dem.get_yticks(), fontsize=15)
-    
+
     ax_dem.set_xticks(range(len(years_all)))
     ax_dem.set_xticklabels([year if year in years else '' for year in years_all],
         fontsize=15)
 
     fig_demtotal_name = '/totaldemand_' + scenario['name'] + '.png'
     fig_dem.savefig(_fig_dir + fig_demtotal_name, dpi=1000)
-    
+
     # =============================================================================
     # PLOT CO2 EMISSIONS
-    from plot_utils import cumulate_data
-
     # generate plot
     fig_co2, ax_co2 = plt.subplots(figsize=(8, 5))
 
