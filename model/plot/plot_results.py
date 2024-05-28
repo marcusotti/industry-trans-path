@@ -93,7 +93,7 @@ for number in range(1):
     var = 'v_demand'
     _file = os.path.join(_results_dir, var + '.xlsx')
     file = pd.ExcelFile(_file)
-
+    
     site_df = pd.read_excel(_params_dir, sheet_name='SITE', 
         index_col='site', header=0)
     site_df = site_df.drop(columns=['comments'])
@@ -266,6 +266,42 @@ for number in range(1):
     fig_dem.savefig(_fig_dir + fig_demtotal_name, dpi=1000)
     
     # =============================================================================
+    # PLOT IMPORT RATIO
+    imp_ratio = {y: {} for y in years_all}
+
+    for y in years_all:
+        data = pd.read_excel(_results_dir + '\\v_mix.xlsx', sheet_name=str(y),
+            index_col=0, header=0)
+        for ec in ['elec', 'alt']:
+            data.loc[ec, 'green'] = data.sum(axis=1)[ec]
+            data.loc[ec, 'grey'] = 0
+        for ec in ['coal', 'NG']:
+            data.loc[ec, 'grey'] = data.sum(axis=1)[ec]
+            data.loc[ec, 'green'] = 0
+        
+        imp_ratio[y] = data.sum(axis=0)['grey'] / data.sum().sum()
+
+    imp_ratio_list = list(imp_ratio.values())
+
+    fig_imp, ax_imp = plt.subplots(figsize=(8, 4))
+
+    ax_imp.plot(years_all, imp_ratio_list, color='black', alpha=alpha)
+
+    ax_imp.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+    y_ticks = np.arange(0, 101, 20)
+    ax_imp.set_yticks(y_ticks/100)
+    ax_imp.set_yticklabels([f'{tick}\%' for tick in y_ticks], fontsize=17)
+    ax_imp.set_ylim([0, 1])
+
+    ax_imp.set_xticks(range(len(years_all)))
+    ax_imp.set_xticklabels([year if year in years else '' for year in years_all],
+        fontsize=17)
+
+    plt.tight_layout()
+    fig_imp_name = '/import_ratio_' + scenario['name'] + '.pdf'
+    fig_imp.savefig(_fig_dir + fig_imp_name, dpi=1000)
+    
+    # =============================================================================
     # PLOT CO2 EMISSIONS
     # generate plot
     fig_co2, ax_co2 = plt.subplots(figsize=(10, 6))
@@ -321,4 +357,4 @@ for number in range(1):
     fig_co2_name = '/co2_' + scenario['name'] + '.pdf'
     fig_co2.savefig(_fig_dir + fig_co2_name, dpi=1000)
     
-#plt.show()
+plt.show()
