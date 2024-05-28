@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import math
 from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Ellipse
 import matplotlib.patches as mpatches
 from matplotlib import rcParams
 from matplotlib.lines import Line2D
@@ -33,59 +34,71 @@ _res_dir = os.path.join(_model_dir, 'results')
 tech_df = pd.read_excel(_params_dir, sheet_name='TECHNOLOGY', index_col=0,
     header=0)
 
-fig, ax = plt.subplots(figsize=(4,3))
-
 years = np.arange(2021,2041)
-ccs = np.zeros(11)
+scenarios = ['ggpos_h2pos', 'ggpos_h2obl', 'ggobl_h2pos', 'ggobl_h2obl']
+ccs = pd.DataFrame(index=scenarios, columns=np.arange(11))
 
-#for scenario in ['ggpos_h2pos', 'ggpos_h2obl', 'ggobl_h2pos', 'ggobl_h2obl']:
+for scenario in scenarios:
+    for mix in range(11):
+        scenario_mix = 'mix' + str(mix) + '_' + scenario
 
-for mix in range(11):
+        _results_dir = os.path.join(_res_dir, scenario_mix)
 
-    scenario = 'ggobl_h2pos'
-    scenario_mix = 'mix' + str(mix) + '_' + scenario
+        v_abated = pd.read_excel(_results_dir + '\\v_abated.xlsx',
+            sheet_name='data', index_col=0, header=0)
 
-    _results_dir = os.path.join(_res_dir, scenario_mix)
+        abated = pd.DataFrame(index=years, columns=['CCS'])
 
-    v_abated = pd.read_excel(_results_dir + '\\v_abated.xlsx', sheet_name='data',
-        index_col=0, header=0)
+        for y in years:
+            abated.loc[y,'CCS'] = sum(v_abated.loc[y,t] for t in tech_df.index 
+                if tech_df.loc[t,'pillar'] == 4) / 1e6
 
-    abated = pd.DataFrame(index=years, columns=['EEI', 'ELEC', 'FS', 'CCS'])
+        ccs.loc[scenario, mix] = abated['CCS'].sum()
 
-    for y in years:
-        for p in abated.columns:
-            if p == 'EEI':
-                pillar = 1
-            elif p == 'ELEC':
-                pillar = 2
-            elif p == 'FS':
-                pillar = 3
-            else:
-                pillar = 4
-
-            abated.loc[y,p] = sum(v_abated.loc[y,t] for t in tech_df.index 
-                if tech_df.loc[t,'pillar'] == pillar) / 1e6
-
-    ccs[mix] = abated['CCS'].sum()
-    
 mix = np.arange(0,11)
-ax.plot(mix, ccs, color='#588157', linewidth=2.5)
 
-ax.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+for scenario in scenarios:
+    fig, ax = plt.subplots(figsize=(6,4.5))
+    ax.plot(mix, ccs.loc[scenario], color='#588157', linewidth=3.5)
+    ax.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
+    ax.set_ylabel('Carbon emissions captured in Mt', fontsize=17)
+    ax.tick_params(axis='y', labelsize=15)
+    ax.set_ylim([88, 139])
+    ax.set_xlabel('Carbon intensity of the power mix in 2030 in $\mathrm{g/kWh}$',
+        fontsize=17)
+    ax.set_xticks(mix)
+    elec_mix = np.linspace(160, 0, num=len(mix)).astype(int)
+    ax.set_xticklabels(elec_mix, fontsize=15)
 
-ax.set_ylabel('Captured carbon emissions in Mt', fontsize=10)
-ax.tick_params(axis='y', labelsize=8)
-ax.set_ylim([ccs.min() - 10, ccs.max() + 10])
+    def draw_circle(ax, x, y, radius, **kwargs):
+        # Get the aspect ratio of the axes
+        aspect_ratio = ax.get_data_ratio()
+        width = radius * 2 / aspect_ratio
+        height = radius * 2
+        ellipse = Ellipse((x, y), width, height, **kwargs)
+        ax.add_patch(ellipse)
 
-elec_mix = np.linspace(158, 0, num=len(mix)).astype(int)
 
-ax.set_xlabel('Carbon intensity of the power mix in 2030 in $\mathrm{g/kWh}$',
-    fontsize=10)
-ax.set_xticks(mix)
-ax.set_xticklabels(elec_mix, fontsize=8)
+    first_value = ccs.loc[scenario, 0]
+    draw_circle(ax, 0, first_value, 0.7, edgecolor='black', facecolor='none', lw=2, zorder=2)
+    ax.annotate(f'{first_value:.1f} Mt',
+                xy=(0, first_value + 0.5), xycoords='data',
+                xytext=(1, first_value + 6), textcoords='data',
+                arrowprops=dict(arrowstyle="-",
+                    connectionstyle='angle,angleA=0,angleB=90,rad=0'),
+                fontsize=15, color='black')
+    
+    last_value = ccs.loc[scenario, 10]
+    draw_circle(ax, 10, last_value, 0.7, edgecolor='black', facecolor='none', lw=2, zorder=2)
+    ax.annotate(f'{last_value:.1f} Mt',
+                xy=(10, last_value - 0.5), xycoords='data',
+                xytext=(9, last_value - 6), textcoords='data',
+                arrowprops=dict(arrowstyle="-", 
+                    connectionstyle='angle,angleA=180,angleB=90,rad=0'),
+                fontsize=15, color='black', horizontalalignment='right')
+    
+    plt.tight_layout()
+    fig_name = '/ccs_' + scenario + '.pdf'
+    fig.savefig(_fig_dir + fig_name, dpi=1000)
 
-fig_name = '/ccs_' + scenario + '.png'
-fig.savefig(_fig_dir + fig_name, dpi=1000)
-
-plt.tight_layout()
-plt.show()
+#plt.show()

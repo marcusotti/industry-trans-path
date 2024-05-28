@@ -156,7 +156,7 @@ for number in range(4):
 
         # ANNUAL OUTPUT OF AN INDUSTRIAL SITE
         def init_output(m, year, site):
-            growth = 0.001
+            growth = 0
             return site_df.loc[site, 'output'] * (1 + growth) ** (year - min(m.y))
 
         m.p_output = py.Param(
@@ -774,9 +774,26 @@ for number in range(4):
                 )
             
         m.eq_carrier_incr_limit = py.Constraint(
-            m.y * m.energy_carrier,
+            m.y * m.ec_no_gg,
             rule=carrier_incr_limit,
             doc='energy carrier increase limitation'
+        )
+
+        # GREEN GASES INCREASE LIMITATION
+        def gg_incr_limit(m, y):
+            if y == m.y.first():
+                return py.Constraint.Skip
+            else:
+                return (
+                    sum(m.v_mix[y, 'GG', mix] for mix in m.mix) <= 
+                    sum(m.v_mix[y-1, 'GG', mix] for mix in m.mix)
+                    + 5000000
+                )
+        
+        m.eq_gg_incr_limit = py.Constraint(
+            m.y,
+            rule=gg_incr_limit,
+            doc='green gases increase limitation'
         )
 
         # NO NEW TECH IN FIRST YEAR
