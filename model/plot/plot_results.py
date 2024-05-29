@@ -32,7 +32,7 @@ _params_dir = os.path.join(_model_dir, 'params.xlsx')
 _fig_dir = os.path.join(_model_dir, 'figures')
 
 
-for number in range(1):
+for number in range(4):
     # different scenarios
     ggpos_h2pos = {
         'gg': False,
@@ -267,9 +267,32 @@ for number in range(1):
     
     # =============================================================================
     # PLOT IMPORT RATIO
-    imp_ratio = {y: {} for y in years_all}
 
+    # generate data for policy 2030
+    imp_ratio = {y: {} for y in years_all}
     for y in years_all:
+        data = pd.read_excel(_results_dir + '\\v_mix.xlsx', sheet_name=str(y),
+            index_col=0, header=0)
+        for ec in ['elec', 'alt']: # correct data for electricity and alt fuels
+            data.loc[ec, 'green'] = data.sum(axis=1)[ec]
+            data.loc[ec, 'grey'] = 0
+        for ec in ['coal', 'NG']: # correct data for coal and NG
+            data.loc[ec, 'grey'] = data.sum(axis=1)[ec]
+            data.loc[ec, 'green'] = 0
+        imp_ratio[y] = data.sum(axis=0)['grey'] / data.sum().sum()
+
+    # generate data for production increase until 2040
+    years_3040 = [str(year) for year in range(2030, 2041)]
+    imp_ratio_2040 = {y: {} for y in years_3040}
+    max_2030_df = pd.read_excel(_params_dir, sheet_name='max 2030', index_col=0, header=0)
+    gg_2030 = max_2030_df.loc['green', 'GG']
+    h2_2030 = max_2030_df.loc['green', 'H2']
+    gg_2040 = 20*1e6
+    h2_2040 = 10*1e6
+    gg_max = np.linspace(gg_2030, gg_2040, num=len(years_3040))
+    h2_max = np.linspace(h2_2030, h2_2040, num=len(years_3040))
+
+    for y in years_3040:
         data = pd.read_excel(_results_dir + '\\v_mix.xlsx', sheet_name=str(y),
             index_col=0, header=0)
         for ec in ['elec', 'alt']:
@@ -278,14 +301,31 @@ for number in range(1):
         for ec in ['coal', 'NG']:
             data.loc[ec, 'grey'] = data.sum(axis=1)[ec]
             data.loc[ec, 'green'] = 0
-        
-        imp_ratio[y] = data.sum(axis=0)['grey'] / data.sum().sum()
+        if data.sum(axis=1)['GG'] > gg_max[int(y)-2030]:
+            data.loc['GG', 'green'] = gg_max[int(y)-2030]
+            data.loc['GG', 'grey'] = data.sum(axis=1)['GG'] - gg_max[int(y)-2030]
+        else:
+            data.loc['GG', 'green'] = data.sum(axis=1)['GG']
+            data.loc['GG', 'grey'] = 0
+        if data.sum(axis=1)['H2'] > h2_max[int(y)-2030]:
+            data.loc['H2', 'green'] = h2_max[int(y)-2030]
+            data.loc['H2', 'grey'] = data.sum(axis=1)['H2'] - h2_max[int(y)-2030]
+        else:
+            data.loc['H2', 'green'] = data.sum(axis=1)['H2']
+            data.loc['H2', 'grey'] = 0
+        imp_ratio_2040[y] = data.sum(axis=0)['grey'] / data.sum().sum()
 
-    imp_ratio_list = list(imp_ratio.values())
-
+    # generate plot
     fig_imp, ax_imp = plt.subplots(figsize=(8, 4))
 
-    ax_imp.plot(years_all, imp_ratio_list, color='black', alpha=alpha)
+    ax_imp.plot(years_all, imp_ratio.values(), color='black', alpha=alpha,
+        label='Policy 2030', linewidth=3, zorder=3)
+    ax_imp.plot(years_3040, imp_ratio_2040.values(), color='#219ebc',
+        alpha=alpha, label='Production increase', linewidth=3, zorder=2)
+
+    ax_imp.legend(loc='upper center', facecolor='White',
+        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=2,
+        borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
 
     ax_imp.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
     y_ticks = np.arange(0, 101, 20)
@@ -357,4 +397,4 @@ for number in range(1):
     fig_co2_name = '/co2_' + scenario['name'] + '.pdf'
     fig_co2.savefig(_fig_dir + fig_co2_name, dpi=1000)
     
-plt.show()
+#plt.show()
