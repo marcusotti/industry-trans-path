@@ -320,12 +320,13 @@ for number in range(4):
 
     ax_imp.plot(years_all, imp_ratio.values(), color='black', alpha=alpha,
         label='Policy 2030', linewidth=3, zorder=3)
-    ax_imp.plot(years_3040, imp_ratio_2040.values(), color='#219ebc',
-        alpha=alpha, label='Production increase', linewidth=3, zorder=2)
+    ax_imp.plot(years_3040, imp_ratio_2040.values(), color='black',
+        alpha=alpha, label='Production increase', linewidth=3, zorder=2,
+        linestyle='--')
 
-    ax_imp.legend(loc='upper center', facecolor='White',
-        fontsize=15, framealpha=0.8, handlelength=1, handletextpad=0.75, ncol=2,
-        borderpad=0.75, columnspacing=1, edgecolor="black", frameon=True)
+    ax_imp.legend(loc='upper center', facecolor='White', fontsize=15, 
+        framealpha=0.8, ncol=2, borderpad=0.75, columnspacing=1,
+        edgecolor="black", frameon=True)
 
     ax_imp.grid(which="major", axis="y", color="#758D99", alpha=0.4, zorder=1)
     y_ticks = np.arange(0, 101, 20)
