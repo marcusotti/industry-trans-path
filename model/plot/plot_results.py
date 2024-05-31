@@ -32,7 +32,7 @@ _params_dir = os.path.join(_model_dir, 'params.xlsx')
 _fig_dir = os.path.join(_model_dir, 'figures')
 
 
-for number in range(4):
+for number in range(1):
     # different scenarios
     ggpos_h2pos = {
         'gg': False,
@@ -221,7 +221,6 @@ for number in range(4):
 
     plt.tight_layout()
     fig_dem_name = '/demand_' + scenario['name'] + '.pdf'
-    fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
         
     # =============================================================================
     # PLOT TOTAL DEMAND
@@ -243,7 +242,6 @@ for number in range(4):
         '#2F58CD'
     ]
 
-    
     ax_dem.stackplot(years_all, dem['coal'], dem['alt'], dem['NG'], dem['GG'],
         dem['H2'], dem['elec'], colors=colors_dem, alpha=alpha)
 
@@ -263,7 +261,6 @@ for number in range(4):
     
     plt.tight_layout()
     fig_demtotal_name = '/totaldemand_' + scenario['name'] + '.pdf'
-    fig_dem.savefig(_fig_dir + fig_demtotal_name, dpi=1000)
     
     # =============================================================================
     # PLOT IMPORT RATIO
@@ -287,9 +284,12 @@ for number in range(4):
     max_2030_df = pd.read_excel(_params_dir, sheet_name='max 2030', index_col=0, header=0)
     gg_2030 = max_2030_df.loc['green', 'GG']
     h2_2030 = max_2030_df.loc['green', 'H2']
+    gg_2035 = 15*1e6
     gg_2040 = 20*1e6
     h2_2040 = 10*1e6
-    gg_max = np.linspace(gg_2030, gg_2040, num=len(years_3040))
+    gg_max = np.concatenate((np.linspace(int(gg_2030), gg_2035, num=5, 
+        endpoint=False), np.linspace(gg_2035, gg_2040, num=6)))
+    print(gg_max)
     h2_max = np.linspace(h2_2030, h2_2040, num=len(years_3040))
 
     for y in years_3040:
@@ -313,6 +313,7 @@ for number in range(4):
         else:
             data.loc['H2', 'green'] = data.sum(axis=1)['H2']
             data.loc['H2', 'grey'] = 0
+        print(data)
         imp_ratio_2040[y] = data.sum(axis=0)['grey'] / data.sum().sum()
 
     # generate plot
@@ -340,7 +341,6 @@ for number in range(4):
 
     plt.tight_layout()
     fig_imp_name = '/import_ratio_' + scenario['name'] + '.pdf'
-    fig_imp.savefig(_fig_dir + fig_imp_name, dpi=1000)
     
     # =============================================================================
     # PLOT CO2 EMISSIONS
@@ -396,6 +396,12 @@ for number in range(4):
 
     plt.tight_layout()
     fig_co2_name = '/co2_' + scenario['name'] + '.pdf'
+
+    # =============================================================================
+    # SAVE FIGURES
+    fig.savefig(_fig_dir + fig_dem_name, dpi=1000)
+    fig_dem.savefig(_fig_dir + fig_demtotal_name, dpi=1000)
+    fig_imp.savefig(_fig_dir + fig_imp_name, dpi=1000)
     fig_co2.savefig(_fig_dir + fig_co2_name, dpi=1000)
     
 #plt.show()
