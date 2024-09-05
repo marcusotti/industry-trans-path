@@ -46637,3 +46637,416 @@ Solution count 4: 4.54026e+10 4.62829e+10 3.72471e+25 4.44752e+25
 
 Optimal solution found (tolerance 1.00e-02)
 Best objective 4.540256079548e+10, best bound 4.524647964065e+10, gap 0.3438%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:00:22 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0xd3f24886
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 55002 rows and 48400 columns
+Presolve time: 0.21s
+Presolved: 7755 rows, 14461 columns, 37272 nonzeros
+Variable types: 12149 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.942097e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.464307e+10, 6078 iterations, 0.11 seconds (0.17 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.4643e+10    0  297 5.1782e+25 4.4643e+10   100%     -    0s
+H    0     0                    4.648933e+10 4.4643e+10  3.97%     -    0s
+     0     0          -    0      4.6489e+10 4.6140e+10  0.75%     -    0s
+
+Cutting planes:
+  Gomory: 26
+  Cover: 5
+  Implied bound: 184
+  MIR: 221
+  Flow cover: 6
+  RLT: 199
+  Relax-and-lift: 21
+
+Explored 1 nodes (7189 simplex iterations) in 0.88 seconds (0.92 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 3: 4.64893e+10 5.17818e+25 7.9421e+25 
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.648933293567e+10, best bound 4.614006507766e+10, gap 0.7513%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:00:33 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0xd918e9b7
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 55002 rows and 48400 columns
+Presolve time: 0.24s
+Presolved: 7755 rows, 14461 columns, 37272 nonzeros
+Variable types: 12149 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.942097e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.452916e+10, 5976 iterations, 0.12 seconds (0.17 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.4529e+10    0  299 5.1782e+25 4.4529e+10   100%     -    0s
+H    0     0                    4.729273e+10 4.4529e+10  5.84%     -    0s
+H    0     0                    4.719428e+10 4.6010e+10  2.51%     -    0s
+     0     0 4.6010e+10    0   72 4.7194e+10 4.6010e+10  2.51%     -    0s
+     0     0 4.6045e+10    0   67 4.7194e+10 4.6045e+10  2.44%     -    1s
+     0     0 4.6046e+10    0   75 4.7194e+10 4.6046e+10  2.43%     -    1s
+     0     0 4.6047e+10    0   72 4.7194e+10 4.6047e+10  2.43%     -    1s
+     0     0 4.6064e+10    0   87 4.7194e+10 4.6064e+10  2.40%     -    1s
+     0     0 4.6064e+10    0   80 4.7194e+10 4.6064e+10  2.40%     -    1s
+H    0     0                    4.627774e+10 4.6064e+10  0.46%     -    1s
+
+Cutting planes:
+  Gomory: 23
+  Cover: 5
+  Implied bound: 176
+  MIR: 198
+  Flow cover: 12
+  RLT: 160
+  Relax-and-lift: 29
+
+Explored 1 nodes (7635 simplex iterations) in 1.63 seconds (1.38 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 5: 4.62777e+10 4.71943e+10 4.72927e+10 ... 7.9421e+25
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.627773804344e+10, best bound 4.606381501699e+10, gap 0.4623%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:00:49 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0x12b75018
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 55002 rows and 48400 columns
+Presolve time: 0.25s
+Presolved: 7755 rows, 14461 columns, 37272 nonzeros
+Variable types: 12149 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.942097e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.441571e+10, 6156 iterations, 0.15 seconds (0.20 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.4416e+10    0  311 5.1782e+25 4.4416e+10   100%     -    0s
+H    0     0                    9.767015e+24 4.4416e+10   100%     -    0s
+     0     0 4.5953e+10    0   90 9.7670e+24 4.5953e+10   100%     -    1s
+H    0     0                    1.192932e+23 4.5953e+10   100%     -    1s
+H    0     0                    4.622969e+10 4.5953e+10  0.60%     -    1s
+H    0     0                    4.613828e+10 4.5953e+10  0.40%     -    1s
+
+Cutting planes:
+  Gomory: 23
+  Implied bound: 198
+  MIR: 97
+  Flow cover: 11
+  RLT: 181
+  Relax-and-lift: 22
+
+Explored 1 nodes (7754 simplex iterations) in 1.68 seconds (1.65 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 6: 4.61383e+10 4.62297e+10 1.19293e+23 ... 7.9421e+25
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.613827600470e+10, best bound 4.595337466164e+10, gap 0.4008%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:01:02 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0x7e9a036a
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 55002 rows and 48400 columns
+Presolve time: 0.20s
+Presolved: 7755 rows, 14461 columns, 37272 nonzeros
+Variable types: 12149 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.942097e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.430251e+10, 5933 iterations, 0.19 seconds (0.19 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.4303e+10    0  298 5.1782e+25 4.4303e+10   100%     -    0s
+H    0     0                    1.192932e+23 4.4303e+10   100%     -    1s
+H    0     0                    4.713208e+10 4.5799e+10  2.83%     -    1s
+H    0     0                    4.712818e+10 4.5799e+10  2.82%     -    1s
+     0     0 4.5799e+10    0   76 4.7128e+10 4.5799e+10  2.82%     -    1s
+H    0     0                    4.710973e+10 4.5799e+10  2.78%     -    1s
+     0     0 4.5853e+10    0   55 4.7110e+10 4.5853e+10  2.67%     -    1s
+     0     0 4.5855e+10    0   87 4.7110e+10 4.5855e+10  2.66%     -    1s
+     0     0 4.5855e+10    0   87 4.7110e+10 4.5855e+10  2.66%     -    1s
+     0     0 4.5856e+10    0   86 4.7110e+10 4.5856e+10  2.66%     -    1s
+     0     0 4.5856e+10    0   73 4.7110e+10 4.5856e+10  2.66%     -    2s
+H    0     0                    4.606766e+10 4.5856e+10  0.46%     -    2s
+
+Cutting planes:
+  Gomory: 23
+  Cover: 17
+  Implied bound: 154
+  MIR: 84
+  Flow cover: 11
+  RLT: 213
+  Relax-and-lift: 43
+
+Explored 1 nodes (7165 simplex iterations) in 2.40 seconds (1.94 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 7: 4.60677e+10 4.71097e+10 4.71282e+10 ... 7.9421e+25
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.606765796673e+10, best bound 4.585598778126e+10, gap 0.4595%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:01:17 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0x6ff4521c
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 55002 rows and 48400 columns
+Presolve time: 0.24s
+Presolved: 7755 rows, 14461 columns, 37272 nonzeros
+Variable types: 12149 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.942097e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.418918e+10, 5586 iterations, 0.14 seconds (0.16 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.4189e+10    0  314 5.1782e+25 4.4189e+10   100%     -    0s
+H    0     0                    9.767015e+24 4.4189e+10   100%     -    0s
+     0     0 4.5732e+10    0   90 9.7670e+24 4.5732e+10   100%     -    1s
+H    0     0                    6.954157e+23 4.5732e+10   100%     -    1s
+H    0     0                    4.603792e+10 4.5737e+10  0.65%     -    1s
+     0     0 4.5737e+10    0   85 4.6038e+10 4.5737e+10  0.65%     -    1s
+
+Cutting planes:
+  Gomory: 24
+  Implied bound: 201
+  MIR: 71
+  Flow cover: 11
+  RLT: 183
+  Relax-and-lift: 42
+
+Explored 1 nodes (7498 simplex iterations) in 1.47 seconds (1.34 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 5: 4.60379e+10 6.95416e+23 9.76702e+24 ... 7.9421e+25
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.603792190651e+10, best bound 4.573745323631e+10, gap 0.6527%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:01:31 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0x7ec9cd02
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 54982 rows and 48380 columns
+Presolve time: 0.20s
+Presolved: 7775 rows, 14481 columns, 37352 nonzeros
+Variable types: 12169 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.990498e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.409575e+10, 6038 iterations, 0.16 seconds (0.19 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.4096e+10    0  219 5.1782e+25 4.4096e+10   100%     -    0s
+H    0     0                    1.192932e+23 4.4096e+10   100%     -    0s
+     0     0 4.5482e+10    0   61 1.1929e+23 4.5482e+10   100%     -    1s
+H    0     0                    4.705124e+10 4.5580e+10  3.13%     -    1s
+     0     0 4.5584e+10    0   79 4.7051e+10 4.5584e+10  3.12%     -    1s
+     0     0 4.5584e+10    0   61 4.7051e+10 4.5584e+10  3.12%     -    1s
+     0     0 4.5584e+10    0   55 4.7051e+10 4.5584e+10  3.12%     -    1s
+     0     0 4.5623e+10    0   90 4.7051e+10 4.5623e+10  3.04%     -    1s
+H    0     0                    4.693842e+10 4.5623e+10  2.80%     -    1s
+     0     0 4.5624e+10    0   91 4.6938e+10 4.5624e+10  2.80%     -    1s
+H    0     0                    4.607439e+10 4.5624e+10  0.98%     -    1s
+     0     0 4.5624e+10    0   91 4.6074e+10 4.5624e+10  0.98%     -    1s
+
+Cutting planes:
+  Gomory: 6
+  Cover: 18
+  Implied bound: 116
+  MIR: 73
+  Flow cover: 6
+  RLT: 79
+  Relax-and-lift: 40
+
+Explored 1 nodes (8080 simplex iterations) in 1.80 seconds (1.79 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 6: 4.60744e+10 4.69384e+10 4.70512e+10 ... 7.9905e+25
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.607438925487e+10, best bound 4.562408120033e+10, gap 0.9774%
+
+Gurobi 11.0.3 (win64) logging started Thu Sep  5 12:01:46 2024
+
+Set parameter LogFile to value "c:\Users\marcu\Documents\PhD\research\IndustryTransPath\industry-trans-path\model\INDUSTRY.log"
+Set parameter MIPGap to value 0.01
+Set parameter MIPFocus to value 1
+Gurobi Optimizer version 11.0.3 build v11.0.3rc0 (win64 - Windows 11.0 (22631.2))
+
+CPU model: AMD Ryzen 5 PRO 7540U w/ Radeon 740M Graphics, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 6 physical cores, 12 logical processors, using up to 12 threads
+
+Optimize a model with 62757 rows, 62861 columns and 246975 nonzeros
+Model fingerprint: 0x57c16925
+Variable types: 56141 continuous, 6720 integer (6720 binary)
+Coefficient statistics:
+  Matrix range     [8e-03, 9e+08]
+  Objective range  [3e-01, 1e+18]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [2e-01, 9e+06]
+Warning: Model contains large matrix coefficients
+Warning: Model contains large objective coefficients
+         Consider reformulating model or setting NumericFocus parameter
+         to avoid numerical issues.
+Presolve removed 54962 rows and 48360 columns
+Presolve time: 0.20s
+Presolved: 7795 rows, 14501 columns, 37432 nonzeros
+Variable types: 12189 continuous, 2312 integer (2312 binary)
+Found heuristic solution: objective 7.991398e+25
+Found heuristic solution: objective 5.178180e+25
+
+Root relaxation: objective 4.397860e+10, 6079 iterations, 0.13 seconds (0.20 work units)
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0 4.3979e+10    0  218 5.1782e+25 4.3979e+10   100%     -    0s
+H    0     0                    4.570239e+10 4.5464e+10  0.52%     -    0s
+     0     0 4.5464e+10    0   75 4.5702e+10 4.5464e+10  0.52%     -    0s
+
+Cutting planes:
+  Gomory: 6
+  Implied bound: 133
+  MIR: 65
+  Flow cover: 5
+  RLT: 45
+  Relax-and-lift: 54
+
+Explored 1 nodes (7333 simplex iterations) in 0.82 seconds (0.95 work units)
+Thread count was 12 (of 12 available processors)
+
+Solution count 3: 4.57024e+10 5.17818e+25 7.9914e+25 
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 4.570239463859e+10, best bound 4.546378092199e+10, gap 0.5221%
